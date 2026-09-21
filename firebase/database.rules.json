@@ -1,0 +1,253 @@
+{
+  // EchoCity · Firebase Realtime Database Security Rules
+  //
+  // 对应 claude/echocity-prototype.md §3.10（角色权限矩阵）与 §1.9.1（G1 三方分工）。
+  // 节点结构的权威说明见同目录 firebase/database-schema/README.md，这里只写权限判断，
+  // 不重复解释每个字段是什么——字段含义变了改 schema 文档，权限边界变了才改这个文件。
+  //
+  // 角色判断统一走 /staff_roles/{uid}（不在 §3 的任何一张表里，是本文件新增的内部节点，
+  // 只服务于权限判断，见 schema 文档 §10）。三个值：
+  //   platform_maintainer   — 平台维护团队（§1.9.1）
+  //   operations_specialist — 运营专员（§1.9.1）
+  //   publicity             — 宣传部门（§1.9.1）
+  // 不在这个节点里的 uid，一律按普通玩家/监护人账号处理。
+  //
+  // 惯例：本文件里用到的每个 root.child('staff_roles')... 判断都封装成同一句表达式，
+  // 直接内联写在各节点的 .read/.write 里（RTDB 规则不支持定义可复用函数/变量）。
+
+  "rules": {
+
+    // ---------- 1. 身份层（schema §1）----------
+
+    "accounts": {
+      "$account_id": {
+        // account_id 就是 Firebase Auth 的 uid，本人可读写自己的账号记录
+        ".read": "auth != null && auth.uid === $account_id",
+        ".write": "auth != null && auth.uid === $account_id",
+        ".validate": "newData.hasChildren(['email', 'activity_score', 'current_scene_mode', 'current_workspace_id', 'pet_id'])",
+        "email": { ".validate": "newData.isString()" },
+        "activity_score": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "current_scene_mode": { ".validate": "newData.val() === 'desk_focus' || newData.val() === 'onsite'" }
+      }
+    },
+
+    "member_slots": {
+      "$member_id": {
+        // 只有该成员位所属账号的监护人能读写；创建时新数据里的 account_id 必须等于自己
+        ".read": "auth != null && data.child('account_id').val() === auth.uid",
+        ".write": "auth != null && (data.child('account_id').val() === auth.uid || (!data.exists() && newData.child('account_id').val() === auth.uid))",
+        "account_id": { ".validate": "newData.val() === auth.uid" },
+        "activity_score": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "points_balance": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+
+        // task_log 是 kid_task_completions 的只读投影（见 schema §9），不接受直接写入，
+        // 由服务端（Cloud Function，家长确认时触发）统一写，避免出现两份不一致的记录
+        "task_log": { ".write": false }
+      }
+    },
+
+    // ---------- 2. 工作区层（schema §2）----------
+
+    "workspaces": {
+      "$workspace_id": {
+        ".read": "auth != null && data.child('account_id').val() === auth.uid",
+        // 日常读写（比如兑换扣 Points/Credits）本人可以直接改，但见下方对 *_cap 字段的单独锁定
+        ".write": "auth != null && (data.child('account_id').val() === auth.uid || (!data.exists() && newData.child('account_id').val() === auth.uid))",
+        "account_id": { ".validate": "newData.val() === auth.uid" },
+        "points_balance": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "credits_balance": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+
+        // points_daily_cap 是 🔧 字段（§1.9.1）：日上限数值只能平台维护团队改，
+        // 本人和运营专员都只能读，不能写——这是把"数值类上限只有平台维护团队能改"
+        // 这条 §1.9.1 原则，具体落在这一个字段上
+        "points_daily_cap": {
+          ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'"
+        }
+      }
+    },
+
+    // ---------- 3. 宠物（schema §3）----------
+
+    "pets": {
+      "$pet_id": {
+        ".read": "auth != null && data.child('account_id').val() === auth.uid",
+        ".write": "auth != null && (data.child('account_id').val() === auth.uid || (!data.exists() && newData.child('account_id').val() === auth.uid))",
+        "account_id": { ".validate": "newData.val() === auth.uid" },
+
+        // mood_tier 由每日 cron（generatePetSentences）用 Admin SDK 写回，
+        // 客户端只读、不直接改（避免玩家自己把心情值改成 high）
+        "mood_tier": { ".write": false }
+      }
+    },
+
+    // ---------- 4. 内容包 / 锚点（schema §4）----------
+    // 内容包数据对所有登录用户公开只读（不含玩家隐私），写权限归运营专员，
+    // 对应 §2 表"锚点清单/主页视觉/故事与文案素材 = 内容包"归属
+
+    "content_packs": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'operations_specialist'"
+    },
+
+    "anchors": {
+      ".read": "auth != null",
+      // 锚点上下线、simulated_data 调试值等都算"内容类"，由运营专员维护（§1.9.1）
+      ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'operations_specialist'",
+
+      "$anchor_id": {
+        // daily_greeting_text / daily_greeting_generated_at 由 generateDailyGreeting
+        // 这个每日 cron（Admin SDK）写，不开放给运营专员手改，避免和"今日回响"缓存机制打架；
+        // 宣传部门（G1：负责审核每日 AI 生成内容）能写一个额外的 reviewed 标记——
+        // 这个字段 §3.7 原表没有，是落地审核流程时新增的，已在 journal.md 记录为一处新增字段
+        "daily_greeting_text": { ".write": false },
+        "daily_greeting_generated_at": { ".write": false },
+        "daily_greeting_reviewed": {
+          ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'publicity'",
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    },
+
+    "story_chapters": {
+      ".read": "auth != null",
+      // §3.10 明确点名的是 unlock_threshold，但同一张表里的 body_text/order_index
+      // 同属"内容类"（§1.9.1：内容类由运营专员对接），这里按同一原则一并放开给运营专员，
+      // 不单独把 unlock_threshold 拆成字段级规则——如果 Diasy 希望正文文案走宣传部门审核
+      // 而不是运营专员直接改，这里需要再拆一次，目前先按 §1.9.1 的\"内容类\"大类处理
+      ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'operations_specialist'"
+    },
+
+    // ---------- 5. 货币配置（schema §5）----------
+    // §3.10 矩阵原文：平台维护团队 读写，运营专员 只读，宣传部门 无权限
+
+    "currency_channel_config": {
+      ".read": "auth != null && (root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer' || root.child('staff_roles').child(auth.uid).val() === 'operations_specialist')",
+      ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'"
+    },
+
+    // ---------- 6. 世界事件（schema §6）----------
+
+    "world_events": {
+      ".read": "auth != null",
+
+      "$event_id": {
+        // 排期字段（starts_at/ends_at/landmark_anchor_id/geofence/boss_hp_total）
+        // 和 reward_pool_total 一样，都是"世界事件排期与奖金池"，§3.10 点名平台维护团队读写
+        "starts_at": { ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'" },
+        "ends_at": { ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'" },
+        "landmark_anchor_id": { ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'" },
+        "geofence": { ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'" },
+        "boss_hp_total": { ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'" },
+        "reward_pool_total": { ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'" },
+
+        // boss_hp_remaining / version / settled 是 hpDecrement callable function
+        // 用 runTransaction() 原子更新的目标字段——客户端（含平台维护团队账号）
+        // 一律零写权限，只有 Admin SDK（Cloud Function）能改，这是 HP spike
+        // "结算只允许触发一次"这条结论从算法正确落实成物理写不了的双重保险
+        "boss_hp_remaining": { ".write": false },
+        "version": { ".write": false },
+        "settled": { ".write": false }
+      }
+    },
+
+    "world_event_participation": {
+      "$event_id": {
+        ".read": "auth != null",
+        "$participant_id": {
+          // joined_at 允许本人自己写（"我加入了这场事件"不是安全边界内的信息）；
+          // eligible_to_attack 客户端可写，但只用于 UI 展示，服务端 hpDecrement
+          // 会重新校验位置和朝向，不信任这个自报字段（schema §6 已说明）
+          "joined_at": {
+            ".write": "auth != null && $participant_id === auth.uid"
+          },
+          "eligible_to_attack": {
+            ".write": "auth != null && $participant_id === auth.uid",
+            ".validate": "newData.isBoolean()"
+          },
+          // 伤害数值本身只能由 hpDecrement function（Admin SDK）写，
+          // 客户端提交伤害必须通过调用这个 callable function，不能直写数据库，
+          // 否则等于绕过并发控制直接改自己的伤害数
+          "damage_from_minigame": { ".write": false },
+          "damage_from_activity": { ".write": false }
+        }
+      }
+    },
+
+    "daily_mini_events": {
+      ".read": "auth != null",
+      // 日常小事件奖励内容偏内容类，但因为直接影响 Points/活跃度产出、
+      // 且不在 §3.10 矩阵里明确点名，暂比照 currency_channel_config 的从紧原则处理：
+      // 只有平台维护团队能写，运营专员只读——如果 Diasy 认为这应该归运营专员（更接近"活动策划"），
+      // 需要单独确认后再放宽，这是本文件里一处按"从紧"原则做的选择，未在 §3.10 明文覆盖
+      ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'"
+    },
+
+    // ---------- 7. AI 翻译层缓存（schema §7）----------
+
+    "pet_status_sentences": {
+      "$pet_id": {
+        // 本人可读自己宠物的缓存文案；生成本身由 generatePetSentences 每日 cron（Admin SDK）写
+        ".read": "auth != null && root.child('pets').child($pet_id).child('account_id').val() === auth.uid",
+        ".write": false,
+        "reviewed": {
+          // 同 anchors.daily_greeting_reviewed，宣传部门审核标记，新增字段
+          ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'publicity'",
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    },
+
+    // ---------- 8. 商户与核销（schema §8）----------
+
+    "merchants": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'operations_specialist'"
+    },
+
+    "redemption_records": {
+      "$redemption_id": {
+        ".read": "auth != null && root.child('workspaces').child(data.child('workspace_id').val()).child('account_id').val() === auth.uid",
+        // 玩家可以发起一条兑换记录（生成二维码），但 redeemed_at 由商户端核销页面
+        // 触发的 Cloud Function（Admin SDK）写入，客户端不能自己把 redeemed_at 填上
+        // 伪造"已核销"状态（schema §8 已说明）
+        ".write": "auth != null && !data.exists() && newData.child('workspace_id').val() != null && root.child('workspaces').child(newData.child('workspace_id').val()).child('account_id').val() === auth.uid",
+        "redeemed_at": { ".write": false }
+      }
+    },
+
+    // ---------- 9. 儿童任务卡（schema §9）----------
+
+    "kid_task_templates": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'operations_specialist'"
+    },
+
+    "kid_task_cards": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'operations_specialist'"
+    },
+
+    "kid_task_completions": {
+      "$member_id": {
+        // 只有该成员位所属账号的监护人能看到/确认任务完成记录
+        ".read": "auth != null && root.child('member_slots').child($member_id).child('account_id').val() === auth.uid",
+        "$card_id": {
+          // guardian_confirmed_at 必须由监护人本人写（D3："家长手动确认"是产品要求，
+          // 这里把它变成写权限层面的强制，不能由孩子的设备/账号自己确认自己的任务）
+          "guardian_confirmed_at": {
+            ".write": "auth != null && root.child('member_slots').child($member_id).child('account_id').val() === auth.uid"
+          }
+        }
+      }
+    },
+
+    // ---------- 10. 内部角色（schema §10）----------
+
+    "staff_roles": {
+      // 对所有客户端零读写权限——只能通过 Firebase 控制台或 Admin SDK 维护，
+      // 这是"三个内部角色不在 demo 范围内自动生成账号"这条决定在权限层面的直接体现
+      ".read": false,
+      ".write": false
+    }
+  }
+}
