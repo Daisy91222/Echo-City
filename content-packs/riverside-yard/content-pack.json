@@ -1,0 +1,6 @@
+{
+  "content_pack_id": "riverside-yard",
+  "display_name": "Riverside Industrial Yard",
+  "homepage_isometric_map_asset": "/content/riverside-yard/map-placeholder.svg",
+  "zones": ["eco", "exhibit", "community"]
+}

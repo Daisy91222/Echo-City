@@ -1,0 +1,21 @@
+{
+  "_meta": {
+    "note": "占位内容——尚未真正调用 Claude API。这里的九句（3 宠物种类 × 3 mood_tier）是等 Diasy 提供 ANTHROPIC_API_KEY 后，用 scripts/generate-pet-sentences.mjs 手动触发一次生成的占位结构，跑通「输入 -> 缓存 -> App 读取」这条链路，不是最终文案。生成后本文件会被脚本覆盖，_meta 会被移除。",
+    "generated": false
+  },
+  "mochi": {
+    "low": "(占位) Mochi curls up quietly, waiting for the yard to wake up again.",
+    "mid": "(占位) Mochi is pottering around near the lamp post, humming along with the solar hum.",
+    "high": "(占位) Mochi is bouncing between anchors today — the yard's been busy and so has Mochi!"
+  },
+  "brick": {
+    "low": "(占位) Brick is napping in the shade, not much going on today.",
+    "mid": "(占位) Brick is keeping an eye on the yard, tail flicking now and then.",
+    "high": "(占位) Brick can barely sit still — today's numbers have Brick zooming around!"
+  },
+  "sprout": {
+    "low": "(占位) Sprout's ears are down, waiting for someone to stop by.",
+    "mid": "(占位) Sprout is hopping along the fence line, checking on things.",
+    "high": "(占位) Sprout is springing from anchor to anchor, full of energy today!"
+  }
+}

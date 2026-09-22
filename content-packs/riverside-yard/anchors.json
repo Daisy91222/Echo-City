@@ -1,0 +1,26 @@
+{
+  "a1-solar-pole": {
+    "anchor_id": "a1-solar-pole",
+    "content_pack_id": "riverside-yard",
+    "zone": "eco",
+    "device_type": "solar_pole",
+    "display_name": "Solar-Powered Lamp Post",
+    "scan_target_ref": "a1-solar-pole-marker",
+    "simulated_data": {
+      "kwh_today": 3.2,
+      "uptime_pct": 94
+    },
+    "daily_greeting_text": null,
+    "daily_greeting_generated_at": null,
+    "story_chapters": [
+      {
+        "chapter_id": "a1-ch1",
+        "order_index": 1,
+        "title": "Before the Lamp",
+        "body_text": "占位史料正文——虬江—黄浦江交界处的工业文化史料，由 Diasy 后续提供（见 journal.md 2026-09-14 记录），先用占位文本跑通\"章节阈值解锁\"这条逻辑。",
+        "unlock_field": "kwh_today",
+        "unlock_threshold": 2.0
+      }
+    ]
+  }
+}
