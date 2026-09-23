@@ -8,6 +8,7 @@ import { loadAnchor, loadContentPack } from "../../content-loader";
 import { StatChip } from "../../components/StatChip";
 import { LiveBar } from "../../components/LiveBar";
 import { Card } from "../../components/Card";
+import { MapBackground } from "../../components/MapBackground";
 
 const PET_EMOJI: Record<string, string> = { mochi: "🐹", brick: "🐱", sprout: "🐰" };
 
@@ -34,26 +35,28 @@ export function S1Home() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* 主页背景等距地图占位 —— 真实素材待 Diasy 提供（G3），骨架阶段用色块代替 */}
-      <div
-        className="flex-1 flex flex-col items-center justify-center gap-fig12"
-        style={{ background: "linear-gradient(180deg, #dfe7df 0%, #f4f4ee 60%)" }}
-      >
-        <div className="flex gap-fig12">
-          <StatChip icon="⚡" value={account?.activity_score ?? 0} label="Activity" />
-          <StatChip icon="★" value={workspace?.points_balance ?? 0} label="Points" />
-          <StatChip icon="◇" value={workspace?.credits_balance ?? 0} label="Credits" />
-        </div>
+      {/* 主页背景等距地图占位 —— 真实素材待 Diasy 提供（G3），骨架阶段用 SVG 色块代替，
+          但视觉上已经是"一张地图"而不是空白渐变 + 悬浮宠物头像 */}
+      <div className="relative flex-1 flex flex-col items-center justify-center gap-fig12 overflow-hidden">
+        <MapBackground />
 
-        <Card className="w-full max-w-sm mx-fig16 text-center">
-          <div className="text-5xl mb-fig12" aria-hidden>
-            {pet ? PET_EMOJI[pet.species] : "..."}
+        <div className="relative z-10 flex flex-col items-center gap-fig12">
+          <div className="flex gap-fig12">
+            <StatChip icon="⚡" value={account?.activity_score ?? 0} label="Activity" />
+            <StatChip icon="★" value={workspace?.points_balance ?? 0} label="Points" />
+            <StatChip icon="◇" value={workspace?.credits_balance ?? 0} label="Credits" />
           </div>
-          <p className="text-xs text-ink-soft mb-1">
-            {pet ? pet.species : "loading"} · mood: {pet ? moodTier : "..."}
-          </p>
-          <p className="text-sm">{statusSentence}</p>
-        </Card>
+
+          <Card className="w-full max-w-sm mx-fig16 text-center">
+            <div className="text-5xl mb-fig12" aria-hidden>
+              {pet ? PET_EMOJI[pet.species] : "..."}
+            </div>
+            <p className="text-xs text-ink-soft mb-1">
+              {pet ? pet.species : "loading"} · mood: {pet ? moodTier : "..."}
+            </p>
+            <p className="text-sm">{statusSentence}</p>
+          </Card>
+        </div>
       </div>
 
       <div className="flex flex-col">
