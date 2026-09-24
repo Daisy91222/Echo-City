@@ -10,8 +10,8 @@
       "kwh_today": 3.2,
       "uptime_pct": 94
     },
-    "daily_greeting_text": null,
-    "daily_greeting_generated_at": null,
+    "daily_greeting_text": "I held the river's light again today, three kilowatts glowing where the old mills once roared.",
+    "daily_greeting_generated_at": 1790261757939,
     "story_chapters": [
       {
         "chapter_id": "a1-ch1",
@@ -19,7 +19,7 @@
         "title": "Before the Lamp",
         "body_text": "占位史料正文——虬江—黄浦江交界处的工业文化史料，由 Diasy 后续提供（见 journal.md 2026-09-14 记录），先用占位文本跑通\"章节阈值解锁\"这条逻辑。",
         "unlock_field": "kwh_today",
-        "unlock_threshold": 2.0
+        "unlock_threshold": 2
       }
     ]
   }
