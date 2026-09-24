@@ -41,7 +41,7 @@ async function generatePetSentences() {
       // 输入按 §3.7 定义：{ pet_species, workspace_today_data, collection_progress, hours_since_fed }
       // 骨架阶段用固定的示例输入，不接每个真实用户的实时数据（那是阶段 2+ 才有意义的事）
       const msg = await client.messages.create({
-        model: "claude-3-5-haiku-latest",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 60,
         messages: [
           {
@@ -66,7 +66,7 @@ async function generatePetSentences() {
 async function generateDailyGreeting(anchors) {
   const anchor = anchors["a1-solar-pole"];
   const msg = await client.messages.create({
-    model: "claude-3-5-haiku-latest",
+    model: "claude-haiku-4-5-20251001",
     max_tokens: 60,
     messages: [
       {
