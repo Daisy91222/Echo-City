@@ -131,8 +131,21 @@
       ".read": "auth != null",
 
       "$event_id": {
+        // 阶段 2 决定（2026-09-24，Diasy 确认）：不给这个 demo 项目升级 Blaze 套餐、
+        // 不部署 Cloud Functions；hpDecrement 原设计的"Admin SDK 专属写权限"改为
+        // 网页前端直连 runTransaction() + 这里的 .validate 校验。事件对象第一次创建
+        // （!data.exists()）时允许任何登录用户一次性写完整个对象——demo 阶段没有单独
+        // 建平台维护团队账号，"谁来创建"简化成"谁先打开这个页面"；写完之后
+        // data.exists() 恒为真，下面几个排期/奖金池字段就再也没有写权限了，起到和
+        // §1.9.1 权限设计类似的"创建后锁死"效果。geofence 字段暂未使用（demo 阶段用
+        // 模拟定位开关代替，见 world-event/participation.ts），保留字段位置给未来
+        // 接入真实地理围栏用，不在这次的 hasChildren 校验里强制要求。
+        ".write": "auth != null && !data.exists()",
+        ".validate": "newData.hasChildren(['event_id', 'content_pack_id', 'starts_at', 'ends_at', 'landmark_anchor_id', 'boss_hp_total', 'boss_hp_remaining', 'version', 'settled', 'reward_pool_total'])",
+
         // 排期字段（starts_at/ends_at/landmark_anchor_id/geofence/boss_hp_total）
-        // 和 reward_pool_total 一样，都是"世界事件排期与奖金池"，§3.10 点名平台维护团队读写
+        // 和 reward_pool_total 一样，都是"世界事件排期与奖金池"，§3.10 点名平台维护团队读写；
+        // 创建之后（data.exists() === true）demo 阶段没有账号能满足这个条件，等于创建后锁死
         "starts_at": { ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'" },
         "ends_at": { ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'" },
         "landmark_anchor_id": { ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'" },
@@ -140,13 +153,24 @@
         "boss_hp_total": { ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'" },
         "reward_pool_total": { ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'" },
 
-        // boss_hp_remaining / version / settled 是 hpDecrement callable function
-        // 用 runTransaction() 原子更新的目标字段——客户端（含平台维护团队账号）
-        // 一律零写权限，只有 Admin SDK（Cloud Function）能改，这是 HP spike
-        // "结算只允许触发一次"这条结论从算法正确落实成物理写不了的双重保险
-        "boss_hp_remaining": { ".write": false },
-        "version": { ".write": false },
-        "settled": { ".write": false }
+        // boss_hp_remaining / version / settled：阶段 2 起改为客户端可写，但用 .validate
+        // 卡死 HP spike 验证过的三条不变式——无负数（只能递减）、version 必须 +1、
+        // settled 只能 false→true 一次。客户端（hpCounter.ts）分别对这三个字段单独跑
+        // 窄路径 transaction，不再一次性提交整个事件对象——整对象写入会要求每个子字段
+        // 都通过自己的写权限校验，卡在上面几个锁死字段上，这也是本次没有沿用旧版
+        // "一次 transaction 写整个 world_event 对象"这个写法的原因。
+        "boss_hp_remaining": {
+          ".write": "auth != null",
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= data.val()"
+        },
+        "version": {
+          ".write": "auth != null",
+          ".validate": "newData.isNumber() && newData.val() === data.val() + 1"
+        },
+        "settled": {
+          ".write": "auth != null",
+          ".validate": "newData.isBoolean() && (data.val() === false || newData.val() === data.val())"
+        }
       }
     },
 
@@ -154,9 +178,12 @@
       "$event_id": {
         ".read": "auth != null",
         "$participant_id": {
-          // joined_at 允许本人自己写（"我加入了这场事件"不是安全边界内的信息）；
-          // eligible_to_attack 客户端可写，但只用于 UI 展示，服务端 hpDecrement
-          // 会重新校验位置和朝向，不信任这个自报字段（schema §6 已说明）
+          // joined_at 允许本人自己写（"我加入了这场事件"不是安全边界内的信息）。
+          //
+          // eligible_to_attack：阶段 2 决定（2026-09-24）不做 Cloud Function 校验位置/
+          // 朝向，客户端可写、且不再被服务端重新校验——这是去掉 Cloud Functions 之后
+          // 的一处已知信任边界（demo 阶段接受，已记入 build-plan.md），不是本条注释
+          // 原来说的"服务端会重新校验"，那句话对应的是旧的 hpDecrement 设计。
           "joined_at": {
             ".write": "auth != null && $participant_id === auth.uid"
           },
@@ -164,11 +191,39 @@
             ".write": "auth != null && $participant_id === auth.uid",
             ".validate": "newData.isBoolean()"
           },
-          // 伤害数值本身只能由 hpDecrement function（Admin SDK）写，
-          // 客户端提交伤害必须通过调用这个 callable function，不能直写数据库，
-          // 否则等于绕过并发控制直接改自己的伤害数
-          "damage_from_minigame": { ".write": false },
-          "damage_from_activity": { ".write": false }
+          // 伤害字段：阶段 2 起改为本人自写 + .validate 卡上限（对应
+          // MAX_DAMAGE_PER_SUBMIT / MAX_ACTIVITY_DAMAGE_PER_SETTLEMENT，
+          // 客户端常量和这里的数字要保持一致，见 hpCounter.ts / participation.ts 注释）。
+          // 只能递增、单次涨幅有封顶，防止客户端绕开小游戏直接给自己写一个巨大的伤害数；
+          // 这不是 Admin SDK 级别的保护，是阶段 2 决定放弃 Cloud Functions 后接受的
+          // 已知信任边界。
+          "damage_from_minigame": {
+            ".write": "auth != null && $participant_id === auth.uid",
+            ".validate": "newData.isNumber() && newData.val() >= 0 && (!data.exists() ? newData.val() <= 60 : (newData.val() >= data.val() && newData.val() - data.val() <= 60))"
+          },
+          "damage_from_activity": {
+            ".write": "auth != null && $participant_id === auth.uid",
+            ".validate": "newData.isNumber() && newData.val() >= 0 && (!data.exists() ? newData.val() <= 40 : (newData.val() >= data.val() && newData.val() - data.val() <= 40))"
+          },
+          // last_activity_settlement_at / activity_score_at_last_settlement：
+          // 阶段 2 新增字段，支撑"每个参与者自己打开页面时结算自己的活跃度伤害"这个
+          // 简化版 6 小时结算机制（原设计是后台 cron 统一结算所有人，见 journal.md）
+          "last_activity_settlement_at": {
+            ".write": "auth != null && $participant_id === auth.uid",
+            ".validate": "newData.isNumber() && (!data.exists() || newData.val() >= data.val())"
+          },
+          "activity_score_at_last_settlement": {
+            ".write": "auth != null && $participant_id === auth.uid",
+            ".validate": "newData.isNumber()"
+          },
+          // reward_claimed：结算后本人领奖只能领一次，写成 true 之后这条规则就再也
+          // 通不过（newData.val() === true 恒成立没问题，但 claimReward() 的
+          // transaction 在应用层已经用 "current === true ? abort : true" 卡掉了
+          // 重复领取，这里的 .validate 是双重保险，防止绕开 transaction 直接 set）
+          "reward_claimed": {
+            ".write": "auth != null && $participant_id === auth.uid && data.val() !== true",
+            ".validate": "newData.isBoolean() && newData.val() === true"
+          }
         }
       }
     },

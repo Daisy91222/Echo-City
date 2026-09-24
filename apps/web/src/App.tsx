@@ -6,6 +6,9 @@ import { L3WorkspaceSelect } from "./screens/WorkspaceSelect/L3";
 import { S1Home } from "./screens/Home/S1";
 import { A1AnchorScan } from "./screens/AnchorScan/A1";
 import { A2AnchorDetail } from "./screens/AnchorDetail/A2";
+import { S3Join } from "./screens/WorldEvent/S3Join";
+import { S2Battle } from "./screens/WorldEvent/S2Battle";
+import { S5Settlement } from "./screens/WorldEvent/S5Settlement";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -50,6 +53,30 @@ export default function App() {
         element={
           <RequireAuth>
             <A2AnchorDetail />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/world-event/join"
+        element={
+          <RequireAuth>
+            <S3Join />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/world-event/battle"
+        element={
+          <RequireAuth>
+            <S2Battle />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/world-event/settlement"
+        element={
+          <RequireAuth>
+            <S5Settlement />
           </RequireAuth>
         }
       />

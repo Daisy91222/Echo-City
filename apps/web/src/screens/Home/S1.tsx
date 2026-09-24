@@ -60,6 +60,10 @@ export function S1Home() {
       </div>
 
       <div className="flex flex-col">
+        <LiveBar onClick={() => navigate("/world-event/join")}>
+          <span className="text-sm">🐉 World Event</span>
+          <span className="text-sm">A boss has appeared →</span>
+        </LiveBar>
         <LiveBar onClick={() => navigate("/anchor/a1-solar-pole/scan")}>
           <span className="text-sm">🔴 Nearby anchor</span>
           <span className="text-sm">{anchor?.display_name ?? "Solar-Powered Lamp Post"} →</span>
