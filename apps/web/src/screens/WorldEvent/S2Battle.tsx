@@ -48,6 +48,16 @@ export function S2Battle() {
   const [submitting, setSubmitting] = useState(false);
   const [activityMsg, setActivityMsg] = useState<string | null>(null);
   const nextId = useRef(0);
+  // 2026-09-25 修复（Diasy 反馈“点了但血条没减少”）：stopRound 是靠 useCallback
+  // 记忆化的，闭包里的 roundDamage 是“创建这个 stopRound 实例时”那一刻的值；而
+  // startRound 里的 window.setTimeout(() => stopRound(), ROUND_MS) 在回合开始那一刻
+  // 就把当时（roundDamage === 0）的 stopRound 实例锁死了，之后每次点泡泡触发的
+  // re-render 都会生成新的 stopRound 实例，但 setTimeout 里存的还是最早那个旧实例——
+  // 15/20 秒后真正执行的 stopRound 用的还是 roundDamage === 0，导致
+  // “if (roundDamage > 0) 才提交伤害”这一步恒不成立，伤害从未真正提交给共享血条。
+  // 用 ref 记录本回合累计伤害，popBubble 和 stopRound 都读写这个 ref 而不是那份
+  // state 闭包，ref 是同一个可变对象，不会有“哪个渲染时刻的旧值”这个问题。
+  const roundDamageRef = useRef(0);
   const spawnTimer = useRef<number | null>(null);
   const endTimer = useRef<number | null>(null);
   const cleanupTimer = useRef<number | null>(null);
@@ -62,15 +72,18 @@ export function S2Battle() {
     if (cleanupTimer.current) window.clearInterval(cleanupTimer.current);
     setBubbles([]);
 
-    if (roundDamage > 0 && eventId) {
+    const finalDamage = roundDamageRef.current;
+    if (finalDamage > 0 && eventId) {
       setSubmitting(true);
-      await submitMinigameDamage(eventId, user!.uid, roundDamage);
+      await submitMinigameDamage(eventId, user!.uid, finalDamage);
       setSubmitting(false);
     }
+    roundDamageRef.current = 0;
     setRoundDamage(0);
-  }, [roundDamage, eventId, user]);
+  }, [eventId, user]);
 
   const startRound = () => {
+    roundDamageRef.current = 0;
     setRoundDamage(0);
     setRoundActive(true);
     spawnTimer.current = window.setInterval(() => {
@@ -98,6 +111,7 @@ export function S2Battle() {
 
   const popBubble = (id: number) => {
     setBubbles((prev) => prev.filter((b) => b.id !== id));
+    roundDamageRef.current += 1;
     setRoundDamage((d) => d + 1);
   };
 
