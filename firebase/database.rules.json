@@ -159,17 +159,24 @@
         // 窄路径 transaction，不再一次性提交整个事件对象——整对象写入会要求每个子字段
         // 都通过自己的写权限校验，卡在上面几个锁死字段上，这也是本次没有沿用旧版
         // "一次 transaction 写整个 world_event 对象"这个写法的原因。
+        // 2026-09-25 修复：下面三条 .validate 原本只考虑"事件已存在、正在递减/递增"
+        // 这一种情况，没有考虑 ensureWorldEvent() 第一次创建整个事件对象时 data.val()
+        // 是 null 这一种情况——null 参与数值/布尔比较在规则语言里恒为 false，导致
+        // 事件从来没能被成功创建过（bootstrap 的 set() 会被这三条 validate 之一拦下，
+        // 报 PERMISSION_DENIED，表现为"世界事件打不开"，且这个根因和此前 hpCounter.ts
+        // 的整对象事务 bug 是两个独立问题）。修法：!data.exists() 时按"这是初始创建"
+        // 单独放行，只在事件已存在时才要求"只能递减/只能 +1/只能 false→true 一次"。
         "boss_hp_remaining": {
           ".write": "auth != null",
-          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= data.val()"
+          ".validate": "newData.isNumber() && newData.val() >= 0 && (!data.exists() || newData.val() <= data.val())"
         },
         "version": {
           ".write": "auth != null",
-          ".validate": "newData.isNumber() && newData.val() === data.val() + 1"
+          ".validate": "newData.isNumber() && (!data.exists() ? newData.val() === 0 : newData.val() === data.val() + 1)"
         },
         "settled": {
           ".write": "auth != null",
-          ".validate": "newData.isBoolean() && (data.val() === false || newData.val() === data.val())"
+          ".validate": "newData.isBoolean() && (!data.exists() ? newData.val() === false : (data.val() === false || newData.val() === data.val()))"
         }
       }
     },
