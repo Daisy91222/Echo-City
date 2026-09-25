@@ -14,8 +14,8 @@ import { BossHpBar } from "../../components/BossHpBar";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
 
-const ROUND_MS = 15_000;
-const SPAWN_INTERVAL_MS = 700;
+const ROUND_MS = 20_000;
+const SPAWN_INTERVAL_MS = 1_100;
 
 interface Bubble {
   id: number;
@@ -23,7 +23,10 @@ interface Bubble {
   bornAt: number;
 }
 
-const BUBBLE_FALL_MS = 2400;
+// 2026-09-25 调慢（Diasy 反馈点不到）：泡泡下落耗时从 2400ms 拉长到 5200ms，
+// 生成间隔（上面 SPAWN_INTERVAL_MS）也从 700ms 拉长到 1100ms，两者一起让屏幕上
+// 同时存在的泡泡更少、每个泡泡停留时间更长，点击窗口变宽。
+const BUBBLE_FALL_MS = 5_200;
 
 // 对应 Figma S2 · World Event — Battle（21:127）：巨龙 + 掉落泡泡 + TAP。
 // 阶段 2 第一版：只做"战斗期打怪掉落道具、边打边拾取"的核心手感（点泡泡=造成伤害），
