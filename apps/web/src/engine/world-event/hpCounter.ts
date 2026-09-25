@@ -69,25 +69,43 @@ export async function submitDamageToBoss(
   const clamped = Math.max(0, Math.min(Math.floor(amount), MAX_DAMAGE_PER_SUBMIT));
   const eventRef = ref(db, `world_events/${eventId}`);
 
-  const result = await runTransaction(eventRef, (current: WorldEvent | null) => {
-    if (!current) return current; // 事件不存在，中止
-    if (current.settled) return; // 已结算——返回 undefined 中止事务，不再扣血
-    if (clamped <= 0) return current; // 没有实际伤害，原样返回，不产生一次空提交
-
-    const nextHp = Math.max(0, current.boss_hp_remaining - clamped);
-    const nowSettled = nextHp <= 0 || Date.now() >= current.ends_at;
-
-    return {
-      ...current,
-      boss_hp_remaining: nextHp,
-      version: current.version + 1,
-      settled: nowSettled,
-    };
-  });
-
-  if (result.committed && result.snapshot.exists()) {
-    const data = result.snapshot.val() as WorldEvent;
-    return { applied: true, newHp: data.boss_hp_remaining, justSettled: data.settled };
+  const snap = await get(eventRef);
+  if (!snap.exists()) return { applied: false, newHp: 0, justSettled: false };
+  const current = snap.val() as WorldEvent;
+  if (current.settled || clamped <= 0) {
+    return { applied: false, newHp: current.boss_hp_remaining, justSettled: current.settled };
   }
-  return { applied: false, newHp: 0, justSettled: false };
+
+  // 三个独立的窄字段事务，不对整个 world_events/{eventId} 对象做事务——2026-09-25 修复：
+  // 之前这里误写成了对整个事件对象做 runTransaction()，这会连带触发
+  // starts_at/boss_hp_total/reward_pool_total 等只有平台维护团队能写的字段各自的
+  // .write 校验，普通玩家账号必然被拒绝（PERMISSION_DENIED），这正是 database.rules.json
+  // 注释里说"不再一次性提交整个事件对象"要避免的问题，之前的代码没有真的照做。
+  const hpRef = ref(db, `world_events/${eventId}/boss_hp_remaining`);
+  const hpResult = await runTransaction(hpRef, (curHp: number | null) => {
+    const base = curHp ?? current.boss_hp_remaining;
+    return Math.max(0, base - clamped);
+  });
+  if (!hpResult.committed) {
+    return { applied: false, newHp: current.boss_hp_remaining, justSettled: current.settled };
+  }
+  const newHp = hpResult.snapshot.val() as number;
+
+  const versionRef = ref(db, `world_events/${eventId}/version`);
+  await runTransaction(
+    versionRef,
+    (curVersion: number | null) => (curVersion ?? current.version) + 1
+  );
+
+  let justSettled = false;
+  if (newHp <= 0 || Date.now() >= current.ends_at) {
+    const settledRef = ref(db, `world_events/${eventId}/settled`);
+    const settledResult = await runTransaction(settledRef, (curSettled: boolean | null) => {
+      if (curSettled === true) return; // 已经被结算过一次，中止，不重复触发
+      return true;
+    });
+    justSettled = settledResult.committed && settledResult.snapshot.val() === true;
+  }
+
+  return { applied: true, newHp, justSettled };
 }

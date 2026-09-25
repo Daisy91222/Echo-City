@@ -23,16 +23,29 @@ export function S3Join() {
 
   const [eventId, setEventId] = useState<string | null>(null);
   const [bootstrapping, setBootstrapping] = useState(true);
+  const [bootstrapError, setBootstrapError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!workspace) return;
     let cancelled = false;
-    ensureWorldEvent(workspace.content_pack_id, "a1-solar-pole").then((event) => {
-      if (!cancelled) {
-        setEventId(event.event_id);
-        setBootstrapping(false);
-      }
-    });
+    setBootstrapError(null);
+    ensureWorldEvent(workspace.content_pack_id, "a1-solar-pole")
+      .then((event) => {
+        if (!cancelled) {
+          setEventId(event.event_id);
+          setBootstrapping(false);
+        }
+      })
+      .catch((err) => {
+        // 2026-09-25 修复：之前这里没有 .catch，创建/读取事件失败时（例如规则还没
+        // publish、或 PERMISSION_DENIED）会留下一个永远转不动的 "Loading world
+        // event..."——看起来像"打不开"，但其实是一次静默失败的 promise，页面上
+        // 什么错误都不会显示。现在把错误显示出来，方便 Diasy 直接看到真实报错文本。
+        if (!cancelled) {
+          setBootstrapError(err instanceof Error ? err.message : String(err));
+          setBootstrapping(false);
+        }
+      });
     return () => {
       cancelled = true;
     };
@@ -50,6 +63,17 @@ export function S3Join() {
   useEffect(() => {
     if (event?.settled) navigate("/world-event/settlement");
   }, [event?.settled, navigate]);
+
+  if (bootstrapError) {
+    return (
+      <div className="p-fig16">
+        <p className="text-accent-red text-sm mb-fig12">Could not open world event:</p>
+        <p className="text-xs font-mono bg-paper-raised border-2 border-ink-strong rounded-md p-fig12">
+          {bootstrapError}
+        </p>
+      </div>
+    );
+  }
 
   if (bootstrapping || !event) {
     return <p className="p-fig16">Loading world event...</p>;
