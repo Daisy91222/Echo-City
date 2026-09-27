@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../engine/identity/useAuth";
 import { useAccount, useWorkspace } from "../../engine/workspace/useAccount";
 import { loadAnchor } from "../../content-loader";
+import { isChapterUnlocked, claimChapterCollectible } from "../../engine/collection/collection";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
 
@@ -9,6 +11,10 @@ import { Button } from "../../components/Button";
 // AI「今日回响」一句 + Check in。骨架阶段"今日回响"读的是内容包里的静态
 // daily_greeting_text（目前是 null，见 anchors.json 注释——等 Claude API
 // key 到位后由 scripts 脚本生成填入，不是现场调用）。
+// 阶段 3 补充：章节解锁判断改用 collection.ts 里的共享函数 isChapterUnlocked
+// （之前这里自己写了一遍同样的比较，C1 图鉴页需要同一段逻辑，抽出来避免重复）；
+// 解锁后顺带尝试 claimChapterCollectible 发一次性 Points（事务守卫，重复进入
+// 这个页面不会重复发）。
 export function A2AnchorDetail() {
   const { anchorId } = useParams<{ anchorId: string }>();
   const { user } = useAuth();
@@ -17,6 +23,15 @@ export function A2AnchorDetail() {
   const navigate = useNavigate();
 
   const anchor = workspace && anchorId ? loadAnchor(workspace.content_pack_id, anchorId) : null;
+
+  useEffect(() => {
+    if (!anchor || !workspace) return;
+    for (const chapter of anchor.story_chapters) {
+      if (isChapterUnlocked(anchor, chapter)) {
+        void claimChapterCollectible(workspace.workspace_id, chapter.chapter_id);
+      }
+    }
+  }, [anchor, workspace]);
 
   if (!anchor) {
     return <p className="p-fig16">Loading...</p>;
@@ -49,7 +64,7 @@ export function A2AnchorDetail() {
         <p className="text-xs text-ink-soft mb-fig12">Story chapters</p>
         {anchor.story_chapters.map((chapter) => {
           const currentValue = anchor.simulated_data[chapter.unlock_field] ?? 0;
-          const unlocked = currentValue >= chapter.unlock_threshold;
+          const unlocked = isChapterUnlocked(anchor, chapter);
           return (
             <div key={chapter.chapter_id} className="mb-fig12 last:mb-0">
               <p className="text-sm font-semibold">

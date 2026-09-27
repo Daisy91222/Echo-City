@@ -22,5 +22,99 @@
         "unlock_threshold": 2
       }
     ]
+  },
+  "a3-factory-facade": {
+    "anchor_id": "a3-factory-facade",
+    "content_pack_id": "riverside-yard",
+    "zone": "exhibit",
+    "device_type": "factory_facade",
+    "display_name": "Old Mill Facade",
+    "scan_target_ref": "a3-factory-facade-marker",
+    "simulated_data": {
+      "visitors_today": 4,
+      "structural_health_pct": 88
+    },
+    "daily_greeting_text": null,
+    "daily_greeting_generated_at": null,
+    "story_chapters": [
+      {
+        "chapter_id": "a3-ch2",
+        "order_index": 2,
+        "title": "The Facade That Watched",
+        "body_text": "占位史料正文——虬江—黄浦江交界处的工业文化史料，由 Diasy 后续提供（见 journal.md 2026-09-14 记录），先用占位文本跑通\"章节阈值解锁\"这条逻辑（a3-factory-facade）。",
+        "unlock_field": "visitors_today",
+        "unlock_threshold": 1
+      }
+    ]
+  },
+  "a4-nfc-plaque": {
+    "anchor_id": "a4-nfc-plaque",
+    "content_pack_id": "riverside-yard",
+    "zone": "exhibit",
+    "device_type": "nfc_plaque",
+    "display_name": "Heritage NFC Plaque",
+    "scan_target_ref": "a4-nfc-plaque-marker",
+    "simulated_data": {
+      "scans_today": 6
+    },
+    "daily_greeting_text": null,
+    "daily_greeting_generated_at": null,
+    "story_chapters": [
+      {
+        "chapter_id": "a4-ch3",
+        "order_index": 3,
+        "title": "A Plaque Where a Screen Used to Be",
+        "body_text": "占位史料正文——虬江—黄浦江交界处的工业文化史料，由 Diasy 后续提供（见 journal.md 2026-09-14 记录），先用占位文本跑通\"章节阈值解锁\"这条逻辑（a4-nfc-plaque）。",
+        "unlock_field": "scans_today",
+        "unlock_threshold": 3
+      }
+    ]
+  },
+  "a5-generator": {
+    "anchor_id": "a5-generator",
+    "content_pack_id": "riverside-yard",
+    "zone": "community",
+    "device_type": "generator",
+    "display_name": "Interactive Generator",
+    "scan_target_ref": "a5-generator-marker",
+    "simulated_data": {
+      "interactions_today": 2,
+      "watts_generated": 40
+    },
+    "daily_greeting_text": null,
+    "daily_greeting_generated_at": null,
+    "story_chapters": [
+      {
+        "chapter_id": "a5-ch4",
+        "order_index": 4,
+        "title": "Turning What the Machines Once Turned",
+        "body_text": "占位史料正文——虬江—黄浦江交界处的工业文化史料，由 Diasy 后续提供（见 journal.md 2026-09-14 记录），先用占位文本跑通\"章节阈值解锁\"这条逻辑（a5-generator）。",
+        "unlock_field": "interactions_today",
+        "unlock_threshold": 1
+      }
+    ]
+  },
+  "a6-lawn-task-point": {
+    "anchor_id": "a6-lawn-task-point",
+    "content_pack_id": "riverside-yard",
+    "zone": "community",
+    "device_type": "lawn_task_point",
+    "display_name": "Lawn Task Point",
+    "scan_target_ref": "a6-lawn-task-point-marker",
+    "simulated_data": {
+      "tasks_completed_today": 3
+    },
+    "daily_greeting_text": null,
+    "daily_greeting_generated_at": null,
+    "story_chapters": [
+      {
+        "chapter_id": "a6-ch5",
+        "order_index": 5,
+        "title": "The Lawn Where the Rail Yard Was",
+        "body_text": "占位史料正文——虬江—黄浦江交界处的工业文化史料，由 Diasy 后续提供（见 journal.md 2026-09-14 记录），先用占位文本跑通\"章节阈值解锁\"这条逻辑（a6-lawn-task-point）。",
+        "unlock_field": "tasks_completed_today",
+        "unlock_threshold": 2
+      }
+    ]
   }
 }

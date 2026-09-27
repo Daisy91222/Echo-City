@@ -1,0 +1,35 @@
+{
+  "m1-riverside-coffee": {
+    "merchant_id": "m1-riverside-coffee",
+    "content_pack_id": "riverside-yard",
+    "display_name": "Riverside Coffee Bar",
+    "discount_config": {
+      "type": "percent",
+      "value": 15,
+      "credits_cost": 30,
+      "description": "15% off any drink"
+    }
+  },
+  "m2-yard-bites": {
+    "merchant_id": "m2-yard-bites",
+    "content_pack_id": "riverside-yard",
+    "display_name": "Yard Bites Canteen",
+    "discount_config": {
+      "type": "flat",
+      "value": 10,
+      "credits_cost": 50,
+      "description": "¥10 off orders over ¥50"
+    }
+  },
+  "m3-heritage-print": {
+    "merchant_id": "m3-heritage-print",
+    "content_pack_id": "riverside-yard",
+    "display_name": "Heritage Print Shop",
+    "discount_config": {
+      "type": "free_item",
+      "value": 0,
+      "credits_cost": 20,
+      "description": "One free heritage postcard print"
+    }
+  }
+}

@@ -269,11 +269,21 @@
     "redemption_records": {
       "$redemption_id": {
         ".read": "auth != null && root.child('workspaces').child(data.child('workspace_id').val()).child('account_id').val() === auth.uid",
-        // 玩家可以发起一条兑换记录（生成二维码），但 redeemed_at 由商户端核销页面
-        // 触发的 Cloud Function（Admin SDK）写入，客户端不能自己把 redeemed_at 填上
-        // 伪造"已核销"状态（schema §8 已说明）
+        // 玩家可以发起一条兑换记录（生成二维码）。redeemed_at 最初设计成只能由商户端
+        // 核销页面触发的 Cloud Function（Admin SDK）写入，客户端零写权限——但这个假设
+        // 和阶段 2 已经推翻的"不用 Cloud Functions/Blaze"决定不一致，2026-09-27 阶段 3
+        // 开工时发现并经 Diasy 确认（AskUserQuestion）：demo 阶段不做真实核销校验，改为
+        // 客户端直接可写，见下方 redeemed_at 字段规则；详细记录见 journal.md 与
+        // firebase/database-schema/README.md §8。
         ".write": "auth != null && !data.exists() && newData.child('workspace_id').val() != null && root.child('workspaces').child(newData.child('workspace_id').val()).child('account_id').val() === auth.uid",
-        "redeemed_at": { ".write": false }
+        // 2026-09-27 由 false 改为 auth != null：任何登录用户都能把任意一条兑换记录标记
+        // 已核销，不校验"这是不是真的商户"——这是明确记录的简化（demo 里没有真正区分
+        // 商户账号与玩家账号），不是疏漏；credits 在生成兑换记录那一步已经扣过，核销这一步
+        // 不涉及二次扣款，玩家能自己伪造核销状态但占不到便宜，风险可控。
+        "redeemed_at": {
+          ".write": "auth != null",
+          ".validate": "!data.exists() && newData.isNumber()"
+        }
       }
     },
 

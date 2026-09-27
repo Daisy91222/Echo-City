@@ -5,7 +5,9 @@
 // content_packs / anchors 节点即可，调用方（screens）不需要跟着改。
 import anchorsData from "../../../../content-packs/riverside-yard/anchors.json";
 import contentPackMeta from "../../../../content-packs/riverside-yard/content-pack.json";
+import merchantsData from "../../../../content-packs/riverside-yard/merchants.json";
 import type { Anchor } from "../engine/ai-translation/types";
+import type { Merchant } from "../engine/collection/types";
 
 export interface ContentPackMeta {
   content_pack_id: string;
@@ -14,10 +16,14 @@ export interface ContentPackMeta {
   zones: string[];
 }
 
-const packs: Record<string, { meta: ContentPackMeta; anchors: Record<string, Anchor> }> = {
+const packs: Record<
+  string,
+  { meta: ContentPackMeta; anchors: Record<string, Anchor>; merchants: Record<string, Merchant> }
+> = {
   "riverside-yard": {
     meta: contentPackMeta as ContentPackMeta,
     anchors: anchorsData as unknown as Record<string, Anchor>,
+    merchants: merchantsData as unknown as Record<string, Merchant>,
   },
 };
 
@@ -27,6 +33,18 @@ export function loadContentPack(contentPackId: string) {
 
 export function loadAnchor(contentPackId: string, anchorId: string): Anchor | null {
   return packs[contentPackId]?.anchors[anchorId] ?? null;
+}
+
+export function listAnchors(contentPackId: string): Anchor[] {
+  return Object.values(packs[contentPackId]?.anchors ?? {});
+}
+
+export function listMerchants(contentPackId: string): Merchant[] {
+  return Object.values(packs[contentPackId]?.merchants ?? {});
+}
+
+export function loadMerchant(contentPackId: string, merchantId: string): Merchant | null {
+  return packs[contentPackId]?.merchants[merchantId] ?? null;
 }
 
 export function listAvailableContentPacks(): ContentPackMeta[] {

@@ -69,12 +69,28 @@ export function S1Home() {
           <span className="text-sm">{anchor?.display_name ?? "Solar-Powered Lamp Post"} →</span>
         </LiveBar>
         <div className="grid grid-cols-4 bg-paper-raised border-t-2 border-ink-strong">
-          {["Connect", "Build", "Collect", "Companion"].map((m) => (
-            <div key={m} className="py-fig12 text-center text-xs text-ink-soft">
-              {m}
-              <div className="text-[10px]">(阶段 2+)</div>
-            </div>
-          ))}
+          <div className="py-fig12 text-center text-xs text-ink-soft">
+            Connect
+            <div className="text-[10px]">(阶段 4+)</div>
+          </div>
+          <div className="py-fig12 text-center text-xs text-ink-soft">
+            Build
+            <div className="text-[10px]">(不进 demo)</div>
+          </div>
+          {/* 阶段 3 落地：Collect 从占位改为真实入口，位置保持在原来第三格，
+              其余三个模块仍是占位（Build 按 §1 C1 不进 demo，Connect/Companion 待后续阶段） */}
+          <button
+            type="button"
+            className="py-fig12 text-center text-xs text-ink-strong font-semibold"
+            onClick={() => navigate("/collection")}
+          >
+            Collect
+            <div className="text-[10px] text-ink-soft font-normal">→</div>
+          </button>
+          <div className="py-fig12 text-center text-xs text-ink-soft">
+            Companion
+            <div className="text-[10px]">(阶段 4+)</div>
+          </div>
         </div>
       </div>
     </div>

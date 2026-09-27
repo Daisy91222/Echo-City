@@ -9,6 +9,9 @@ import { A2AnchorDetail } from "./screens/AnchorDetail/A2";
 import { S3Join } from "./screens/WorldEvent/S3Join";
 import { S2Battle } from "./screens/WorldEvent/S2Battle";
 import { S5Settlement } from "./screens/WorldEvent/S5Settlement";
+import { C1Collection } from "./screens/Collection/C1";
+import { C2Redemption } from "./screens/Redemption/C2";
+import { M1MerchantScan } from "./screens/MerchantScan/M1";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -77,6 +80,32 @@ export default function App() {
         element={
           <RequireAuth>
             <S5Settlement />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/collection"
+        element={
+          <RequireAuth>
+            <C1Collection />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/redeem"
+        element={
+          <RequireAuth>
+            <C2Redemption />
+          </RequireAuth>
+        }
+      />
+      {/* 商户端核销页面——2026-09-27 与 Diasy 确认：demo 阶段不做真实核销校验，
+          复用同一个 App 的登录态，不单独做商户账号体系，见 M1.tsx 顶部注释 */}
+      <Route
+        path="/merchant-scan"
+        element={
+          <RequireAuth>
+            <M1MerchantScan />
           </RequireAuth>
         }
       />

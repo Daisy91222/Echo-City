@@ -229,7 +229,7 @@ Realtime Database 没有 join、没有外键约束，只有一棵大 JSON 树。
 }
 ```
 
-- `boss_hp_remaining` / `version` / `settled` 三个字段是 `hpDecrement` Cloud Function 用 `runTransaction()` 原子更新的目标（build-plan §1、§3 已定）——**这三个字段刻意不开放任何客户端直接写权限**，`database.rules.json` 里对应位置是 `".write": false`，所有伤害提交必须走 callable function，这是把 §5 HP 计数器 spike 验证过的"只允许 settled 从 false 变 true 一次"这条规则，从"算法层面正确"落实成"客户端物理上写不了"，双重保险。
+- `boss_hp_remaining` / `version` / `settled` 三个字段最初的设计（如上一段）是给 `hpDecrement` Cloud Function 用 `runTransaction()` 原子更新，客户端零写权限。**2026-09-24 阶段 2 开工前这处设计已被推翻**：升级 Firebase Blaze 付费计划 + 部署 Cloud Functions 的成本超出"只考虑 demo 呈现简易性"的标准（Diasy 经 AskUserQuestion 确认），改为**客户端直连 + Security Rules 校验**——三个字段各自单独走 `runTransaction()`（不是整个 event 对象一次性事务，2026-09-25 修过一次这个实现细节，见 `journal.md`），`database.rules.json` 里对应位置从 `".write": false` 改成"自写 + 校验单调递减/递增/只能 false→true 一次"。§5 HP 计数器 spike 验证过的算法逻辑不变，只是把"由谁执行这个事务"从服务端换成了客户端，双重保险因此变成单保险（少了一层"客户端物理上写不了"），这是本节此前没有同步更新的一处文档滞后，2026-09-27 阶段 3 开工前发现并改正，具体已在 `claude/echocity-build-plan.md` §3 阶段 2 行完整记录。
 - `reward_pool_total` 是 🔧 字段，占位 `null`（§1.5 待定）。
 
 ### `world_event_participation/{event_id}/{member_or_account_id}`
@@ -326,7 +326,7 @@ Realtime Database 没有 join、没有外键约束，只有一棵大 JSON 树。
 }
 ```
 
-- `redeemed_at` 写入 `null` 表示"已生成二维码、还没被商户端核销"，商户端网页扫码后由 Cloud Function 写入真实时间戳并原子扣减对应 `workspaces/{id}/credits_balance`——核销这一步同样不开放客户端直接写 `redeemed_at`，避免玩家自己伪造"已核销"状态。
+- `redeemed_at` 写入 `null` 表示"已生成二维码、还没被商户端核销"。最初的设计（同上一段）是商户端网页扫码后由 Cloud Function 写入真实时间戳，客户端零写权限。**2026-09-27 阶段 3 开工时，这处设计与阶段 2 已经推翻 Cloud Functions 的决定不一致**——经与 Diasy 确认（AskUserQuestion），**demo 阶段不做真实核销校验**：`redeemed_at` 改为客户端直接可写（`database.rules.json` 对应位置从 `".write": false` 改成 `"auth != null"`），商户端扫码页面本质上只是同一个 App 里的一个页面（复用登录态，不区分"这是不是真的商户账号"），玩家理论上可以自己把自己的记录标记成已核销——这是一处明确记录的简化，不是疏漏，量产阶段需要补回服务端校验（Cloud Function 或独立商户后台 + 角色校验）才能真正杜绝伪造。信用扣减（`credits_spent`）发生在生成兑换记录那一步，不是核销那一步，核销只影响这条记录本身的状态，不涉及二次扣款，避免了"伪造核销"这个简化连带影响余额安全。
 
 ---
 
