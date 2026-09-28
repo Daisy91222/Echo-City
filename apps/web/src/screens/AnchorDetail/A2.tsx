@@ -1,9 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../engine/identity/useAuth";
 import { useAccount, useWorkspace } from "../../engine/workspace/useAccount";
 import { loadAnchor } from "../../content-loader";
 import { isChapterUnlocked, claimChapterCollectible } from "../../engine/collection/collection";
+import { usePet } from "../../engine/companion/usePet";
+import { retrieveByScan } from "../../engine/companion/wander";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
 
@@ -15,14 +17,19 @@ import { Button } from "../../components/Button";
 // （之前这里自己写了一遍同样的比较，C1 图鉴页需要同一段逻辑，抽出来避免重复）；
 // 解锁后顺带尝试 claimChapterCollectible 发一次性 Points（事务守卫，重复进入
 // 这个页面不会重复发）。
+// 阶段 4 补充：这里也是"扫描锚点找回出走宠物"（§3.3 / R7）的落地位置——
+// 玩家从 Companion 面板点"Go find it"或者正常扫锚点走到这个详情页，如果
+// 这个锚点正好是宠物当前躲藏的那个，就顺带找回，不需要专门再建一个"找回"页面。
 export function A2AnchorDetail() {
   const { anchorId } = useParams<{ anchorId: string }>();
   const { user } = useAuth();
   const { account } = useAccount(user?.uid);
   const { workspace } = useWorkspace(account?.current_workspace_id);
+  const { pet } = usePet(account?.pet_id);
   const navigate = useNavigate();
 
   const anchor = workspace && anchorId ? loadAnchor(workspace.content_pack_id, anchorId) : null;
+  const [foundPet, setFoundPet] = useState(false);
 
   useEffect(() => {
     if (!anchor || !workspace) return;
@@ -33,6 +40,15 @@ export function A2AnchorDetail() {
     }
   }, [anchor, workspace]);
 
+  useEffect(() => {
+    if (!anchor || !pet || !account) return;
+    if (pet.wandered_off && pet.wandered_anchor_id === anchor.anchor_id) {
+      void retrieveByScan(pet, account.pet_id, anchor.anchor_id).then((result) => {
+        if (result === "ok") setFoundPet(true);
+      });
+    }
+  }, [anchor, pet, account]);
+
   if (!anchor) {
     return <p className="p-fig16">Loading...</p>;
   }
@@ -40,6 +56,12 @@ export function A2AnchorDetail() {
   return (
     <div className="min-h-screen flex flex-col gap-fig16 p-fig16">
       <h1 className="text-xl font-bold">{anchor.display_name}</h1>
+
+      {foundPet && (
+        <Card className="bg-accent-sand">
+          <p className="text-sm">🐾 You found your companion here! It's been brought home.</p>
+        </Card>
+      )}
 
       <Card>
         <p className="text-xs text-ink-soft mb-fig12">Today's readings (simulated)</p>

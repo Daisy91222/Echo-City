@@ -1,8 +1,11 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../engine/identity/useAuth";
 import { useAccount, useWorkspace } from "../../engine/workspace/useAccount";
 import { usePet } from "../../engine/companion/usePet";
 import { computeMoodTier } from "../../engine/companion/moodTier";
+import { effectiveHoursSinceFed } from "../../engine/companion/feeding";
+import { checkAndTriggerWander } from "../../engine/companion/wander";
 import { pickPetStatusSentence } from "../../engine/ai-translation/petStatusSentences";
 import { loadAnchor, loadContentPack } from "../../content-loader";
 import { StatChip } from "../../components/StatChip";
@@ -25,13 +28,24 @@ export function S1Home() {
   const pack = workspace ? loadContentPack(workspace.content_pack_id) : null;
   const anchor = pack ? loadAnchor(workspace!.content_pack_id, "a1-solar-pole") : null;
 
-  const hoursSinceFed = pet ? (Date.now() - pet.last_fed_at) / 3_600_000 : 999;
+  // 阶段 4：有效投喂间隔改用 effectiveHoursSinceFed（自动喂食器生效时折算为 0），
+  // 不再直接算 last_fed_at 距今——两处（S1 主页、Companion 面板）共用同一个函数，
+  // 避免各自重复实现"自动喂食器生效期间当作刚喂过"这条规则。
+  const hoursSinceFed = pet ? effectiveHoursSinceFed(pet) : 999;
   const moodTier = computeMoodTier({
     todayKwh: anchor?.simulated_data.kwh_today ?? 0,
     collectionCount: 0,
     hoursSinceFed,
   });
   const statusSentence = pet ? pickPetStatusSentence(pet.species, moodTier) : "...";
+
+  // 出走判定放在主页加载时检查——这是用户几乎每次打开 App 都会经过的屏幕，
+  // 不需要为此单独起一个后台任务或 cron。事务本身是幂等守卫（见 wander.ts），
+  // 重复触发这个 effect（比如切换工作区再切回来）不会重复判定/重复选锚点。
+  useEffect(() => {
+    if (!pet || !workspace || !account) return;
+    void checkAndTriggerWander(pet, account.pet_id, workspace.content_pack_id);
+  }, [pet, workspace, account]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -49,12 +63,14 @@ export function S1Home() {
 
           <Card className="w-full max-w-sm mx-fig16 text-center">
             <div className="text-5xl mb-fig12" aria-hidden>
-              {pet ? PET_EMOJI[pet.species] : "..."}
+              {pet?.wandered_off ? "❓" : pet ? PET_EMOJI[pet.species] : "..."}
             </div>
             <p className="text-xs text-ink-soft mb-1">
-              {pet ? pet.species : "loading"} · mood: {pet ? moodTier : "..."}
+              {pet ? pet.species : "loading"} · mood: {pet?.wandered_off ? "away" : pet ? moodTier : "..."}
             </p>
-            <p className="text-sm">{statusSentence}</p>
+            <p className="text-sm">
+              {pet?.wandered_off ? "Your companion wandered off — check Companion to find it." : statusSentence}
+            </p>
           </Card>
         </div>
       </div>
@@ -87,10 +103,15 @@ export function S1Home() {
             Collect
             <div className="text-[10px] text-ink-soft font-normal">→</div>
           </button>
-          <div className="py-fig12 text-center text-xs text-ink-soft">
+          {/* 阶段 4 落地：Companion 从占位改为真实入口 */}
+          <button
+            type="button"
+            className="py-fig12 text-center text-xs text-ink-strong font-semibold"
+            onClick={() => navigate("/companion")}
+          >
             Companion
-            <div className="text-[10px]">(阶段 4+)</div>
-          </div>
+            <div className="text-[10px] text-ink-soft font-normal">→</div>
+          </button>
         </div>
       </div>
     </div>

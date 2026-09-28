@@ -120,6 +120,7 @@ Realtime Database 没有 join、没有外键约束，只有一棵大 JSON 树。
 ```
 
 - `mood_tier` 是计算字段（§3.3 原文说明），但在 RTDB 里不做成"实时函数"，而是由 `generatePetSentences`（每日 cron，见 build-plan §2）在同一批次里顺便重算并写回这个字段——RTDB 没有数据库端计算列，只能选"客户端每次现算"或"后台定时写回缓存值"，选后者是因为 F5 缓存策略本来就要求"预生成 + 不按打开触发"，两件事用同一个 cron 完成，不重复设计。
+- **2026-09-28 阶段 4（陪伴细化）落地说明**：`auto_feeder_active_until`/`wandered_off`/`wandered_anchor_id` 三个字段在 §3.3 草稿阶段就已经列出，本阶段是第一次真正被代码读写（`engine/companion/feeding.ts`/`wander.ts`）。三者都延续阶段 0/1 就定下的信任边界——客户端直写、Security Rules 只锁 `mood_tier`，不需要为这几个字段新增规则或 Cloud Function（出走判定、投喂、找回全部是客户端算好直接 `set()`/`runTransaction()`，没有服务端二次校验，和阶段 2/3 其余字段的简化程度一致，不是新降低的标准）。出走触发阈值（`WANDER_THRESHOLD_HOURS`，占位 72）、叫回花费（`POINTS_RECALL_COST`，占位 15）、自动喂食器价格与时长（`AUTO_FEEDER_COST_CREDITS`/`AUTO_FEEDER_DURATION_HOURS`，占位 30 Credits / 24h）均为占位数值，等 Diasy"数值对话"再定。专注计时（D1 番茄钟）本身不落库到 `pets` 节点，只在完成时给 `accounts/{account_id}/activity_score` 加一次固定值（`ACTIVITY_PER_FOCUS_SESSION`，占位 10），时长常量 `FOCUS_SESSION_SECONDS` demo 阶段故意设得很短（120 秒）方便 Diasy 一次测试内验证完整链路，量产阶段改回 25 分钟即可，见 `engine/companion/focus.ts` 顶部注释。
 
 ---
 

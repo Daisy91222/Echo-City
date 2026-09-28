@@ -12,6 +12,8 @@ import { S5Settlement } from "./screens/WorldEvent/S5Settlement";
 import { C1Collection } from "./screens/Collection/C1";
 import { C2Redemption } from "./screens/Redemption/C2";
 import { M1MerchantScan } from "./screens/MerchantScan/M1";
+import { S4Companion } from "./screens/Companion/S4";
+import { D1Focus } from "./screens/Focus/D1";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -106,6 +108,23 @@ export default function App() {
         element={
           <RequireAuth>
             <M1MerchantScan />
+          </RequireAuth>
+        }
+      />
+      {/* 阶段 4（陪伴细化）：Companion 面板（投喂/自动喂食器/出走找回）+ 桌面专注番茄钟 */}
+      <Route
+        path="/companion"
+        element={
+          <RequireAuth>
+            <S4Companion />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/focus"
+        element={
+          <RequireAuth>
+            <D1Focus />
           </RequireAuth>
         }
       />
