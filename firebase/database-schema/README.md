@@ -161,6 +161,7 @@ Realtime Database 没有 join、没有外键约束，只有一棵大 JSON 树。
 ```
 
 - `simulated_data` 的字段形状按 `device_type` 变化（§3.4 原文已说明），RTDB 不做 schema 校验，这一点在 Security Rules 里也放开（只校验存在字符串/数字类型，不逐字段枚举），交给 App 层的 TypeScript 类型定义去保证形状正确。
+- **2026-09-29 阶段 5 新增第二个内容包 `the-room`**（4 个锚点：台灯/落地灯/书/对联，对应 `claude/echocity-prototype.md` B2 的映射），证明这里描述的节点结构对任何内容包都成立，不是只为 `riverside-yard` 量身定制。`device_type` 在代码里是纯字符串（`Anchor.device_type: string`），the-room 用了几个新的字符串值（`table_lamp`/`floor_lamp`/`interactive_book`/`couplet_scroll`），不需要改任何 TypeScript 类型或 Security Rules。
 
 ### `story_chapters/{chapter_id}`
 
@@ -387,6 +388,8 @@ Realtime Database 没有 join、没有外键约束，只有一棵大 JSON 树。
 - 三个角色值：`platform_maintainer` / `operations_specialist` / `publicity`；不在这个节点里出现的 `uid`，一律按普通玩家账号处理。
 - **这个节点本身对所有客户端不可读、不可写**（见 `database.rules.json`），只能通过 Firebase 控制台或 Admin SDK（Cloud Function、或 Diasy 在控制台里手动添加）写入——三个内部角色目前还没有账号分配（不在 demo 范围内自动生成），等运营框架文档真正需要演示角色分权时再手动加测试账号，见 build-plan 阶段 5。
 
+**2026-09-29 补记（阶段 5 · 运营后台第一次真正读写这几个节点）**：`currency_channel_config`（§5）与 `merchants`（§8）这两个节点的权限规则从阶段 0 建库起就写好了，但在阶段 5 之前从未被任何界面真正读写过——App 其余部分（Redemption/C2、Collection/C1 等）读的都是 `content-loader` 里的静态内容包 JSON，不读这两个 Firebase 实时节点。阶段 5 新增的运营后台（`/ops` 路由）是第一次真正用真实登录账号去触碰它们，验证"平台维护团队改得了 Credits 渠道上限、运营专员改不了；运营专员改得了商户折扣、平台维护团队反而不在这条规则的写权限里"这条 §1.9.1 分权设计成立。要让这两个对比效果真的显现，Diasy 需要先在 Firebase 控制台的 Realtime Database **数据**面板（不是 Rules 面板）手动给至少一个测试账号的 uid 写入 `staff_roles/{uid} = "platform_maintainer"`（可选再建一个 `"operations_specialist"` 账号对比），这是一次性的手动步骤，和"改完 rules.json 要 Publish"是两件不同的事——这次改的是数据，不是规则，规则本身在阶段 0 就已写好，具体是否已经 Publish 生效需要 Diasy 确认（见 build-plan §4）。
+
 ---
 
 ## 11. 与 §3 的差异对照表（便于核对没有遗漏字段）
@@ -407,7 +410,7 @@ Realtime Database 没有 join、没有外键约束，只有一棵大 JSON 树。
 | pet_status_sentence | `pet_status_sentences/{pet_id}` | 三档 + 生成日期合并进单节点，不按日期分叉保留历史 |
 | anchor_daily_greeting | 并入 `anchors/{id}` 字段 | 不独立建节点 |
 | merchant | `merchants/{id}` | 无差异 |
-| redemption_record | `redemption_records/{id}` | `redeemed_at` 客户端零写权限 |
+| redemption_record | `redemption_records/{id}` | `redeemed_at` 2026-09-27 起改为客户端可写一次（demo 简化，不做真实核销校验），见 §8——此前这行仍写着旧版"客户端零写权限"，是一处文档漂移，阶段 5 顺手发现并修正 |
 | kid_task_template | `kid_task_templates/{id}` | 无差异 |
 | kid_task_card | `kid_task_cards/{content_pack_id}/{id}` | 无差异（表结构本就按 content_pack 分） |
 | kid_task_completion | `kid_task_completions/{member_id}/{card_id}` | 无差异 |

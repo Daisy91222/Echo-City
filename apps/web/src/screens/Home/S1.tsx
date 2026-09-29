@@ -7,7 +7,7 @@ import { computeMoodTier } from "../../engine/companion/moodTier";
 import { effectiveHoursSinceFed } from "../../engine/companion/feeding";
 import { checkAndTriggerWander } from "../../engine/companion/wander";
 import { pickPetStatusSentence } from "../../engine/ai-translation/petStatusSentences";
-import { loadAnchor, loadContentPack } from "../../content-loader";
+import { listAnchors } from "../../content-loader";
 import { StatChip } from "../../components/StatChip";
 import { LiveBar } from "../../components/LiveBar";
 import { Card } from "../../components/Card";
@@ -25,8 +25,12 @@ export function S1Home() {
   const { pet } = usePet(account?.pet_id);
   const navigate = useNavigate();
 
-  const pack = workspace ? loadContentPack(workspace.content_pack_id) : null;
-  const anchor = pack ? loadAnchor(workspace!.content_pack_id, "a1-solar-pole") : null;
+  // 阶段 5 修复：此前硬编码 "a1-solar-pole"（riverside-yard 专属锚点 id），切到
+  // the-room 工作区后这里会 loadAnchor(...) 拿到 null——不会崩溃，但会显示错误的
+  // 兜底文案且"最近锚点"入口点进去是个不存在的锚点。改为取当前内容包的第一个锚点，
+  // 对任何内容包都成立，不是 the-room 专属特判。
+  const featuredAnchor = workspace ? listAnchors(workspace.content_pack_id)[0] ?? null : null;
+  const anchor = featuredAnchor;
 
   // 阶段 4：有效投喂间隔改用 effectiveHoursSinceFed（自动喂食器生效时折算为 0），
   // 不再直接算 last_fed_at 距今——两处（S1 主页、Companion 面板）共用同一个函数，
@@ -37,7 +41,9 @@ export function S1Home() {
     collectionCount: 0,
     hoursSinceFed,
   });
-  const statusSentence = pet ? pickPetStatusSentence(pet.species, moodTier) : "...";
+  const statusSentence = pet
+    ? pickPetStatusSentence(pet.species, moodTier, workspace?.content_pack_id)
+    : "...";
 
   // 出走判定放在主页加载时检查——这是用户几乎每次打开 App 都会经过的屏幕，
   // 不需要为此单独起一个后台任务或 cron。事务本身是幂等守卫（见 wander.ts），
@@ -80,9 +86,11 @@ export function S1Home() {
           <span className="text-sm">🐉 World Event</span>
           <span className="text-sm">A boss has appeared →</span>
         </LiveBar>
-        <LiveBar onClick={() => navigate("/anchor/a1-solar-pole/scan")}>
+        <LiveBar
+          onClick={() => anchor && navigate(`/anchor/${anchor.anchor_id}/scan`)}
+        >
           <span className="text-sm">🔴 Nearby anchor</span>
-          <span className="text-sm">{anchor?.display_name ?? "Solar-Powered Lamp Post"} →</span>
+          <span className="text-sm">{anchor?.display_name ?? "..."} →</span>
         </LiveBar>
         <div className="grid grid-cols-4 bg-paper-raised border-t-2 border-ink-strong">
           <div className="py-fig12 text-center text-xs text-ink-soft">
@@ -111,6 +119,21 @@ export function S1Home() {
           >
             Companion
             <div className="text-[10px] text-ink-soft font-normal">→</div>
+          </button>
+        </div>
+
+        {/* 阶段 5 新增：此前注册后没有任何入口能回到 /select-workspace——
+            L2 只在注册那一刻导航过去一次。没有这一行，账号会永远困在
+            riverside-yard 工作区，阶段 5"切换到 the-room 工作区"这条 DoD
+            没有真实可点的路径可以验证。/ops 是运营后台草图的入口，标注
+            "staff only"是文案层面的提示，不是真正的权限门（真正权限见 §3.10
+            规则，由 Firebase 服务端判断，不是这个链接可不可见）。 */}
+        <div className="flex justify-between px-fig16 py-fig8 bg-paper-raised border-t border-paper-line text-[10px] text-ink-soft">
+          <button type="button" className="underline" onClick={() => navigate("/select-workspace")}>
+            Switch workspace
+          </button>
+          <button type="button" className="underline" onClick={() => navigate("/ops")}>
+            Ops backend (staff only)
           </button>
         </div>
       </div>

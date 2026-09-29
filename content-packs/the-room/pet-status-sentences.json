@@ -1,0 +1,17 @@
+{
+  "mochi": {
+    "low": "I'm curled up under the desk lamp, a little hungry and waiting for the room to feel busier.",
+    "mid": "I'm dozing by the warm glow of the table lamp, comfortably full for now.",
+    "high": "I'm bouncing across the desk today, full and cheered on by every page turned in the book."
+  },
+  "brick": {
+    "low": "I'm sitting quietly by the floor lamp, hoping someone opens the book again soon.",
+    "mid": "I'm perked up as the floor lamp keeps the corner bright and my belly isn't too empty.",
+    "high": "I'm feeling sprightly today, the room's been busy and I've been well fed."
+  },
+  "sprout": {
+    "low": "I'm tucked by the couplet on the wall, a bit peckish as the room stays quiet.",
+    "mid": "I'm content watching the lamps glow, feeling okay about today.",
+    "high": "I'm hopping around the room, energized by all today's little visits and a full belly."
+  }
+}

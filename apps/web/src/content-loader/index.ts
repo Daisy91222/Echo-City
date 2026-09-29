@@ -6,6 +6,13 @@
 import anchorsData from "../../../../content-packs/riverside-yard/anchors.json";
 import contentPackMeta from "../../../../content-packs/riverside-yard/content-pack.json";
 import merchantsData from "../../../../content-packs/riverside-yard/merchants.json";
+// 阶段 5 新增第二个内容包 the-room——按 build-plan §2 目录结构的原意，新增园区本该
+// 只是"新增文件夹"；但这个 packs 注册表目前仍需要在这里手动加一条 import + 一条
+// 记录（不是完全零代码改动）。这是 content-loader（不在 engine/ 目录下）而非
+// engine 本身的一处已知实现细节，已如实记入 build-plan.md，不掩饰成"全自动发现"。
+import theRoomAnchorsData from "../../../../content-packs/the-room/anchors.json";
+import theRoomContentPackMeta from "../../../../content-packs/the-room/content-pack.json";
+import theRoomMerchantsData from "../../../../content-packs/the-room/merchants.json";
 import type { Anchor } from "../engine/ai-translation/types";
 import type { Merchant } from "../engine/collection/types";
 
@@ -24,6 +31,11 @@ const packs: Record<
     meta: contentPackMeta as ContentPackMeta,
     anchors: anchorsData as unknown as Record<string, Anchor>,
     merchants: merchantsData as unknown as Record<string, Merchant>,
+  },
+  "the-room": {
+    meta: theRoomContentPackMeta as ContentPackMeta,
+    anchors: theRoomAnchorsData as unknown as Record<string, Anchor>,
+    merchants: theRoomMerchantsData as unknown as Record<string, Merchant>,
   },
 };
 

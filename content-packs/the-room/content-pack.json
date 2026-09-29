@@ -1,0 +1,6 @@
+{
+  "content_pack_id": "the-room",
+  "display_name": "The Room (Demo Scene)",
+  "homepage_isometric_map_asset": "/content/the-room/map-placeholder.svg",
+  "zones": ["eco", "exhibit", "community"]
+}

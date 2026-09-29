@@ -8,6 +8,7 @@ import {
   setEligibleToAttack,
 } from "../../engine/world-event/participation";
 import { useMyParticipation, useWorldEvent } from "../../engine/world-event/useWorldEvent";
+import { listAnchors } from "../../content-loader";
 import { BossHpBar } from "../../components/BossHpBar";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
@@ -29,7 +30,13 @@ export function S3Join() {
     if (!workspace) return;
     let cancelled = false;
     setBootstrapError(null);
-    ensureWorldEvent(workspace.content_pack_id, "a1-solar-pole")
+    // 阶段 5 修复：此前硬编码 "a1-solar-pole"（riverside-yard 专属锚点 id）当作
+    // 巨龙停靠的地标——landmark_anchor_id 从未在任何界面被回读展示（纯存储字段，
+    // 见 hpCounter.ts/S3Join.tsx 全文 grep 确认），所以这处硬编码不会让页面报错，
+    // 但会让 the-room 工作区创建的世界事件里存一个不属于这个内容包的锚点 id，
+    // 数据不诚实。改为取当前内容包的第一个锚点，对任何内容包都成立。
+    const landmarkAnchorId = listAnchors(workspace.content_pack_id)[0]?.anchor_id ?? "unknown-anchor";
+    ensureWorldEvent(workspace.content_pack_id, landmarkAnchorId)
       .then((event) => {
         if (!cancelled) {
           setEventId(event.event_id);

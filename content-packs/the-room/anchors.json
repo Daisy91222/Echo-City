@@ -1,0 +1,97 @@
+{
+  "r1-table-lamp": {
+    "anchor_id": "r1-table-lamp",
+    "content_pack_id": "the-room",
+    "zone": "eco",
+    "device_type": "table_lamp",
+    "display_name": "Table Lamp",
+    "scan_target_ref": "r1-table-lamp-marker",
+    "simulated_data": {
+      "kwh_today": 1.4,
+      "uptime_pct": 97
+    },
+    "daily_greeting_text": null,
+    "daily_greeting_generated_at": null,
+    "story_chapters": [
+      {
+        "chapter_id": "r1-ch1",
+        "order_index": 1,
+        "title": "The Lamp on the Desk",
+        "body_text": "占位史料正文——房间内容包是演示场景（B2：房间映射台灯→路灯杆的发电量口径），不是真实历史场地，暂不需要 Diasy 提供史料，先用占位文本跑通\"章节阈值解锁\"这条逻辑（r1-table-lamp）。",
+        "unlock_field": "kwh_today",
+        "unlock_threshold": 1
+      }
+    ]
+  },
+  "r2-floor-lamp": {
+    "anchor_id": "r2-floor-lamp",
+    "content_pack_id": "the-room",
+    "zone": "eco",
+    "device_type": "floor_lamp",
+    "display_name": "Floor Lamp",
+    "scan_target_ref": "r2-floor-lamp-marker",
+    "simulated_data": {
+      "liters_collected_today": 2.5,
+      "uptime_pct": 91
+    },
+    "daily_greeting_text": null,
+    "daily_greeting_generated_at": null,
+    "story_chapters": [
+      {
+        "chapter_id": "r2-ch1",
+        "order_index": 1,
+        "title": "By the Window",
+        "body_text": "占位史料正文——B2 原始映射把落地灯对应到雨水收集（收集量）这个概念，但引擎的 device_type 目前没有独立的雨水收集类型（阶段 3 定稿的 5 个 riverside-yard 锚点用的是 solar_pole/factory_facade/nfc_plaque/generator/lawn_task_point 这五种），这里没有新造一个 engine 层枚举去匹配，而是给了 floor_lamp 自己的 simulated_data 形状（liters_collected_today）来表达收集量这个语义——device_type 在代码里是纯字符串（未做强类型枚举），这么做不算改 engine/ 代码，只是内容包数据的自由度，已如实记入 build-plan.md（r2-floor-lamp）。",
+        "unlock_field": "liters_collected_today",
+        "unlock_threshold": 2
+      }
+    ]
+  },
+  "r3-book": {
+    "anchor_id": "r3-book",
+    "content_pack_id": "the-room",
+    "zone": "community",
+    "device_type": "interactive_book",
+    "display_name": "The Book on the Shelf",
+    "scan_target_ref": "r3-book-marker",
+    "simulated_data": {
+      "interactions_today": 3,
+      "pages_turned_today": 12
+    },
+    "daily_greeting_text": null,
+    "daily_greeting_generated_at": null,
+    "story_chapters": [
+      {
+        "chapter_id": "r3-ch1",
+        "order_index": 1,
+        "title": "A Book That Remembers Being Opened",
+        "body_text": "占位史料正文——B2 映射：书对应互动发电装置的互动次数口径。房间是演示场景，非真实历史场地，暂不需要提供史料（r3-book）。",
+        "unlock_field": "interactions_today",
+        "unlock_threshold": 1
+      }
+    ]
+  },
+  "r4-couplet": {
+    "anchor_id": "r4-couplet",
+    "content_pack_id": "the-room",
+    "zone": "exhibit",
+    "device_type": "couplet_scroll",
+    "display_name": "The Couplet Scroll",
+    "scan_target_ref": "r4-couplet-marker",
+    "simulated_data": {
+      "visitors_today": 5
+    },
+    "daily_greeting_text": null,
+    "daily_greeting_generated_at": null,
+    "story_chapters": [
+      {
+        "chapter_id": "r4-ch1",
+        "order_index": 1,
+        "title": "Words on the Wall",
+        "body_text": "占位史料正文——B2 映射：对联对应厂房立面/铭牌的人流口径。房间是演示场景，非真实历史场地，暂不需要提供史料（r4-couplet）。",
+        "unlock_field": "visitors_today",
+        "unlock_threshold": 3
+      }
+    ]
+  }
+}

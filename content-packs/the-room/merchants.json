@@ -1,0 +1,24 @@
+{
+  "m1-room-service-tea": {
+    "merchant_id": "m1-room-service-tea",
+    "content_pack_id": "the-room",
+    "display_name": "Room Service Tea Cart",
+    "discount_config": {
+      "type": "percent",
+      "value": 20,
+      "credits_cost": 25,
+      "description": "20% off any tea order"
+    }
+  },
+  "m2-desk-supply-shop": {
+    "merchant_id": "m2-desk-supply-shop",
+    "content_pack_id": "the-room",
+    "display_name": "Desk Supply Shop",
+    "discount_config": {
+      "type": "flat",
+      "value": 8,
+      "credits_cost": 40,
+      "description": "¥8 off stationery orders over ¥40"
+    }
+  }
+}

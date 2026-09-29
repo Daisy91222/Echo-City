@@ -14,6 +14,7 @@ import { C2Redemption } from "./screens/Redemption/C2";
 import { M1MerchantScan } from "./screens/MerchantScan/M1";
 import { S4Companion } from "./screens/Companion/S4";
 import { D1Focus } from "./screens/Focus/D1";
+import { O1OpsBackend } from "./screens/Ops/O1";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -125,6 +126,17 @@ export default function App() {
         element={
           <RequireAuth>
             <D1Focus />
+          </RequireAuth>
+        }
+      />
+      {/* 阶段 5：运营后台草图（build-plan §3 阶段 5 行）。落地 §3.10 角色权限矩阵——
+          见 O1.tsx 顶部注释，权限完全由当前登录账号的 Firebase staff_roles 记录决定，
+          这个路由本身对任何登录用户都开放，真正的读写结果才体现权限差异。 */}
+      <Route
+        path="/ops"
+        element={
+          <RequireAuth>
+            <O1OpsBackend />
           </RequireAuth>
         }
       />
