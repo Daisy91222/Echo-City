@@ -8,6 +8,7 @@ import { usePet } from "../../engine/companion/usePet";
 import { retrieveByScan } from "../../engine/companion/wander";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
+import { BackToHome } from "../../components/BackToHome";
 
 // 对应 Figma A2（42:363）：物件今日数据 + 故事章节（已解锁/阈值进度）+
 // AI「今日回响」一句 + Check in。骨架阶段"今日回响"读的是内容包里的静态
@@ -55,6 +56,7 @@ export function A2AnchorDetail() {
 
   return (
     <div className="min-h-screen flex flex-col gap-fig16 p-fig16">
+      <BackToHome />
       <h1 className="text-xl font-bold">{anchor.display_name}</h1>
 
       {foundPet && (

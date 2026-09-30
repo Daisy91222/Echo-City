@@ -12,6 +12,7 @@ import { listAnchors } from "../../content-loader";
 import { BossHpBar } from "../../components/BossHpBar";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
+import { BackToHome } from "../../components/BackToHome";
 
 // 对应 Figma S3 · World Event — Join（29:148）：天空中的巨龙 + 加入弹窗。
 // 对应报告 L-3.0 / R8：参战条件 = 地理围栏内 + 罗盘朝向巨龙——demo 阶段用一个
@@ -90,6 +91,7 @@ export function S3Join() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-fig16 p-fig16">
+      <BackToHome />
       <div className="text-6xl" aria-hidden>
         🐉
       </div>

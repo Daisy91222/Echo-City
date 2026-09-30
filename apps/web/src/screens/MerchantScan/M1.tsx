@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { markRedeemed } from "../../engine/collection/redemption";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
+import { BackToHome } from "../../components/BackToHome";
 
 // 商户端核销页面。2026-09-27 与 Diasy 确认过的范围（见 journal.md/build-plan.md
 // 阶段 3 行）：demo 阶段不做真实核销校验——这个页面复用同一个 App 的登录态，
@@ -24,6 +25,7 @@ export function M1MerchantScan() {
 
   return (
     <div className="min-h-screen flex flex-col gap-fig16 p-fig16 items-center justify-center text-center">
+      <BackToHome />
       <h1 className="text-xl font-bold">Merchant check-in</h1>
       <p className="text-xs text-ink-soft max-w-xs">
         Type the code the customer showed you, then confirm.

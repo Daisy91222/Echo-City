@@ -17,6 +17,7 @@ import { loadAnchor } from "../../content-loader";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
 import { StatChip } from "../../components/StatChip";
+import { BackToHome } from "../../components/BackToHome";
 
 const PET_EMOJI: Record<string, string> = { mochi: "🐹", brick: "🐱", sprout: "🐰" };
 
@@ -80,6 +81,7 @@ export function S4Companion() {
 
   return (
     <div className="min-h-screen flex flex-col gap-fig16 p-fig16">
+      <BackToHome />
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Companion</h1>
         <div className="flex gap-fig12">

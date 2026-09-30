@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { LiveBar } from "../../components/LiveBar";
+import { BackToHome } from "../../components/BackToHome";
 
 // 对应 Figma A1（41:322）：取景器 + 扫描框 + 底部 Live Bar Nav。
 // 骨架阶段没有真实摄像头识别，用一个"模拟扫描"按钮直接跳详情页，
@@ -11,6 +12,7 @@ export function A1AnchorScan() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <BackToHome />
       <div className="flex-1 bg-ink-strong flex items-center justify-center">
         <div className="w-64 h-64 border-4 border-dashed border-paper-base rounded-lg flex items-center justify-center">
           <p className="text-paper-base text-sm text-center px-fig16">

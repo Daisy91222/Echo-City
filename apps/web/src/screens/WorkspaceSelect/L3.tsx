@@ -6,6 +6,7 @@ import { switchToWorkspace } from "../../engine/workspace/workspaceSwitch";
 import { listAvailableContentPacks } from "../../content-loader";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
+import { BackToHome } from "../../components/BackToHome";
 
 // 对应 Figma L3（33:316）：选园区工作区 = 选内容包
 // 页脚"一个引擎 · 每园区一个内容包"直接对应这个页面存在的产品架构理由
@@ -41,6 +42,7 @@ export function L3WorkspaceSelect() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-fig16 px-fig16">
+      <BackToHome />
       <h1 className="text-2xl font-bold">Choose your workspace</h1>
       <div className="flex flex-col gap-fig12 w-full max-w-sm">
         {packs.map((pack) => (

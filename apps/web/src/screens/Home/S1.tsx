@@ -67,7 +67,9 @@ export function S1Home() {
             <StatChip icon="◇" value={workspace?.credits_balance ?? 0} label="Credits" />
           </div>
 
-          <Card className="w-full max-w-sm mx-fig16 text-center">
+          {/* Diasy 反馈：主页宠物卡片缩小至 70% —— 用 CSS scale 整体缩放
+              （文字/emoji/内边距一起按比例变小），不是单独改某个字号 */}
+          <Card className="w-full max-w-sm mx-fig16 text-center scale-[0.7]">
             <div className="text-5xl mb-fig12" aria-hidden>
               {pet?.wandered_off ? "❓" : pet ? PET_EMOJI[pet.species] : "..."}
             </div>

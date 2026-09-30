@@ -8,6 +8,7 @@ import type { RedemptionRecord } from "../../engine/collection/types";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
 import { StatChip } from "../../components/StatChip";
+import { BackToHome } from "../../components/BackToHome";
 
 // 对应 Figma C2（兑换页）：商户列表 + Credits 花费 → 出示二维码 → 商户端扫码核销。
 // "二维码"在 demo 里就是 redemption_id 本身的文字展示（见 redemption.ts 顶部注释
@@ -61,6 +62,7 @@ export function C2Redemption() {
 
   return (
     <div className="min-h-screen flex flex-col gap-fig16 p-fig16">
+      <BackToHome />
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Redeem</h1>
         <StatChip icon="◇" value={workspace.credits_balance} label="Credits" />

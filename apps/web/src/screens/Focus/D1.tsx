@@ -9,6 +9,7 @@ import {
 } from "../../engine/companion/focus";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
+import { BackToHome } from "../../components/BackToHome";
 
 // 对应 Figma D1（43:368）："从窗框看出去的小地图番茄钟"。骨架版先不画窗框
 // 小地图本身（美术资源待 Diasy 提供），用一个纯数字倒计时 + 窗框色块占位，
@@ -51,6 +52,7 @@ export function D1Focus() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-fig16 p-fig16">
+      <BackToHome />
       <Card className="w-full max-w-sm text-center">
         {/* 窗框占位——四条粗边框模拟"从窗框看出去"，真实素材待 Diasy 提供 */}
         <div className="border-4 border-ink-strong rounded-md p-fig16 bg-paper-base">

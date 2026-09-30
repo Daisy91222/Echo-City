@@ -13,6 +13,7 @@ import { useWorkspace } from "../../engine/workspace/useAccount";
 import { BossHpBar } from "../../components/BossHpBar";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
+import { BackToHome } from "../../components/BackToHome";
 
 const ROUND_MS = 20_000;
 const SPAWN_INTERVAL_MS = 1_100;
@@ -144,6 +145,7 @@ export function S2Battle() {
 
   return (
     <div className="min-h-screen flex flex-col p-fig16 gap-fig16">
+      <BackToHome />
       <BossHpBar current={event.boss_hp_remaining} total={event.boss_hp_total} />
 
       <div

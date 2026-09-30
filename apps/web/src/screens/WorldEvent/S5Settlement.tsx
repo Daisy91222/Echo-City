@@ -8,6 +8,7 @@ import { computeRewardShares, claimReward } from "../../engine/world-event/settl
 import { BossHpBar } from "../../components/BossHpBar";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
+import { BackToHome } from "../../components/BackToHome";
 
 // 对应 Figma S5 · Settlement（67:412）：名次卡 + 奖励 + Top-50 伤害榜 + Claim rewards。
 export function S5Settlement() {
@@ -47,6 +48,7 @@ export function S5Settlement() {
 
   return (
     <div className="min-h-screen flex flex-col p-fig16 gap-fig16">
+      <BackToHome />
       <h2 className="font-pixel text-lg text-center">Event Settled</h2>
       <BossHpBar current={event.boss_hp_remaining} total={event.boss_hp_total} />
 

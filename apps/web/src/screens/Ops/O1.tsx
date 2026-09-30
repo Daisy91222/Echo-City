@@ -11,6 +11,7 @@ import { listMerchants } from "../../content-loader";
 import type { CurrencyChannelConfig } from "../../engine/ops/types";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
+import { BackToHome } from "../../components/BackToHome";
 
 // 阶段 5 新增：运营后台草图（build-plan §3 阶段 5 行）。落地 §3.10 角色权限矩阵——
 // 不是做两套独立登录的后台系统，而是用当前登录账号真实去读/写两个此前从未被
@@ -35,6 +36,7 @@ export function O1OpsBackend() {
 
   return (
     <div className="min-h-screen flex flex-col gap-fig16 p-fig16 max-w-2xl mx-auto">
+      <BackToHome />
       <h1 className="text-2xl font-bold">Ops Backend (staff only)</h1>
       <p className="text-xs text-ink-soft">
         §1.9.1 三方分工的字段级验证：下面两块分别对应"平台维护团队"和"运营专员"

@@ -6,6 +6,7 @@ import { allChaptersSorted, isChapterUnlocked } from "../../engine/collection/co
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
 import { StatChip } from "../../components/StatChip";
+import { BackToHome } from "../../components/BackToHome";
 
 // 对应 Figma C1（图鉴/收集页）：五个锚点各一章故事，按 order_index 排列，
 // 已收集（章节已解锁 + 在 workspace.collection_progress 里记过一次性 Points）
@@ -29,6 +30,7 @@ export function C1Collection() {
 
   return (
     <div className="min-h-screen flex flex-col gap-fig16 p-fig16">
+      <BackToHome />
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Collection</h1>
         <div className="flex gap-fig12">
