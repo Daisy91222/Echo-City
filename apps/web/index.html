@@ -3,8 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>web</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>EchoCity</title>
+
+    <!-- REV 04（PWA 化）：VitePWA 插件会自动注入 manifest 链接和 service worker
+         注册脚本，这里手动补的是 iOS Safari 不认 manifest、必须单独声明的几项——
+         "添加到主屏幕"图标和全屏模式的状态栏样式。 -->
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="EchoCity" />
+    <meta name="theme-color" content="#1e2320" />
   </head>
   <body>
     <div id="root"></div>

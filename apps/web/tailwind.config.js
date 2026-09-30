@@ -41,6 +41,8 @@ export default {
       },
       fontFamily: {
         pixel: ['"Pixelify Sans"', "sans-serif"],
+        // REV 04：正文易读字体，标题与数字仍用 pixel（见 index.css 的 @layer base）
+        body: ['"Inter"', "sans-serif"],
       },
       boxShadow: {
         // Figma「阴影二分」：硬边 3px 无模糊

@@ -26,8 +26,13 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 // 路由结构直接对应 §4 Figma 画面清单 ★ 第 1–3 条：
 // 登录 → 选工作区 → 主界面 → 锚点扫描 → 锚点详情
 export default function App() {
+  // REV 04（390 宽手机框，2026-09-30）：外层套一个居中的手机框容器，
+  // 深色背景衬托出"这是一部手机"的观感；容器本身不改变任何屏幕内部的实现，
+  // 各屏幕原有的 min-h-screen 只影响高度，宽度现在由这层容器的 max-w 决定。
   return (
-    <Routes>
+    <div className="min-h-screen bg-ink-strong flex justify-center">
+      <div className="w-full max-w-[390px] min-h-screen relative overflow-x-hidden shadow-hard bg-paper-base">
+        <Routes>
       <Route path="/login" element={<L1Login />} />
       <Route path="/register" element={<L2Register />} />
       <Route
@@ -140,6 +145,8 @@ export default function App() {
           </RequireAuth>
         }
       />
-    </Routes>
+        </Routes>
+      </div>
+    </div>
   );
 }

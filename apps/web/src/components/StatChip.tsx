@@ -6,7 +6,7 @@ export function StatChip({ icon, value, label }: { icon: string; value: number |
       title={label}
     >
       <span aria-hidden>{icon}</span>
-      <span className="font-semibold">{value}</span>
+      <span className="font-semibold font-pixel">{value}</span>
     </span>
   );
 }

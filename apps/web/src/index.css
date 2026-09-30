@@ -2,11 +2,28 @@
 @import "@fontsource/pixelify-sans/500.css";
 @import "@fontsource/pixelify-sans/600.css";
 @import "@fontsource/pixelify-sans/700.css";
+/* REV 04（字体方案，2026-09-30）：像素字体（Pixelify Sans）只保留给标题与数字，
+   正文改用 Inter（易读字体，同一套 @fontsource 引入方式，界面仍为英文）。 */
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  @apply bg-paper-base text-ink-base font-pixel;
+  @apply bg-paper-base text-ink-base font-body;
+}
+
+/* REV 04：标题标签统一走像素字体，不需要逐个屏幕手动加 className——
+   这是"标题保留像素字体"这条修订在字体层面的落点。部分屏幕的"标题"是用
+   div/p + 加粗大字号实现的而不是语义化的 h1–h4 标签，这些暂时还是走正文
+   字体，如实记在这里：等实际看效果觉得不对再个别调整，不在这次改动里
+   对每个屏幕逐一排查。 */
+@layer base {
+  h1, h2, h3, h4 {
+    @apply font-pixel;
+  }
 }
