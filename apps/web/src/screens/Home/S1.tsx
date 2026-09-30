@@ -60,16 +60,21 @@ export function S1Home() {
       <div className="relative flex-1 flex flex-col items-center justify-center gap-fig12 overflow-hidden">
         <MapBackground />
 
-        <div className="relative z-10 flex flex-col items-center gap-fig12">
+        {/* Diasy 反馈：卡片缩小至 70%、状态条挪到卡片正上方、两者要"关系合理"——
+            之前的问题是 scale 只加在 Card 自己身上：Card 的盒子在布局时仍然占
+            着缩放前的整块空间，视觉上缩小的内容悬在这块空间中间，和上面没缩放
+            的状态条之间就会多出一截不成比例的空白。这次把 scale 挪到包住"状态条
+            + 卡片"两者的外层容器上，两者作为一个整体一起缩放，间距比例才是对的。 */}
+        <div className="relative z-10 flex flex-col items-center gap-fig8 scale-[0.7]">
           <div className="flex gap-fig12">
             <StatChip icon="⚡" value={account?.activity_score ?? 0} label="Activity" />
             <StatChip icon="★" value={workspace?.points_balance ?? 0} label="Points" />
             <StatChip icon="◇" value={workspace?.credits_balance ?? 0} label="Credits" />
           </div>
 
-          {/* Diasy 反馈：主页宠物卡片缩小至 70% —— 用 CSS scale 整体缩放
-              （文字/emoji/内边距一起按比例变小），不是单独改某个字号 */}
-          <Card className="w-full max-w-sm mx-fig16 text-center scale-[0.7]">
+          {/* 卡片纵向拉长一点（min-h + 内容用 justify-center 垂直居中），
+              不再单独缩放，缩放交给上面的外层容器统一处理 */}
+          <Card className="w-full max-w-sm mx-fig16 text-center min-h-[22rem] flex flex-col justify-center">
             <div className="text-5xl mb-fig12" aria-hidden>
               {pet?.wandered_off ? "❓" : pet ? PET_EMOJI[pet.species] : "..."}
             </div>
