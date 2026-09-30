@@ -50,7 +50,16 @@
 
     "workspaces": {
       "$workspace_id": {
-        ".read": "auth != null && data.child('account_id').val() === auth.uid",
+        // 2026-09-30 修复：原规则 "data.child('account_id').val() === auth.uid" 在
+        // workspace 尚不存在时，data 为 null，null === auth.uid 恒为 false，导致
+        // ensureWorkspaceForPack()（阶段 5 新增，切换到 the-room 时第一次真正调用）
+        // 里那次"先 get() 看存不存在"的读取本身就先被 .read 拦下、报 PERMISSION_DENIED，
+        // 根本走不到后面的 set()。这是和 2026-09-25 world_events 的 !data.exists() bug
+        // 同一类问题（null 参与比较恒为 false），只是这次发生在 .read 而不是 .write/.validate，
+        // 且是"读一个还不存在的路径"这个操作模式本身第一次被跑到——注册流程
+        // （registerAndBootstrap）从来是直接 set()，从未先 get() 过一个不存在的 workspace，
+        // 所以这个坑一直没被踩到，直到阶段 5 引入 workspaceSwitch.ts 的 ensureWorkspaceForPack()。
+        ".read": "auth != null && (!data.exists() || data.child('account_id').val() === auth.uid)",
         // 日常读写（比如兑换扣 Points/Credits）本人可以直接改，但见下方对 *_cap 字段的单独锁定
         ".write": "auth != null && (data.child('account_id').val() === auth.uid || (!data.exists() && newData.child('account_id').val() === auth.uid))",
         "account_id": { ".validate": "newData.val() === auth.uid" },
