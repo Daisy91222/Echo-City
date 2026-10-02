@@ -49,7 +49,7 @@ export function M1MerchantScan() {
       {status === "not_found" && <p className="text-sm text-accent-red">No matching code found.</p>}
 
       <Button variant="secondary" onClick={() => navigate("/")}>
-        ← Back to map
+        ← Back to home
       </Button>
     </div>
   );

@@ -138,7 +138,7 @@ export function S2Battle() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-fig16 gap-fig12">
         <p className="text-sm text-ink-soft">You're not in range to attack.</p>
-        <Button onClick={() => navigate("/world-event/join")}>Back</Button>
+        <Button onClick={() => navigate("/")}>Back to home</Button>
       </div>
     );
   }
@@ -197,8 +197,8 @@ export function S2Battle() {
         {activityMsg && <p className="text-xs mt-fig12">{activityMsg}</p>}
       </Card>
 
-      <button className="text-xs text-ink-soft underline" onClick={() => navigate("/world-event/join")}>
-        Back
+      <button className="text-xs text-ink-soft underline" onClick={() => navigate("/")}>
+        Back to home
       </button>
     </div>
   );

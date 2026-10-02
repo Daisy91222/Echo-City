@@ -78,7 +78,7 @@ export function C1Collection() {
         Redeem Credits →
       </Button>
       <Button variant="secondary" onClick={() => navigate("/")}>
-        ← Back to map
+        ← Back to home
       </Button>
     </div>
   );

@@ -28,7 +28,7 @@ export function A1AnchorScan() {
         </Button>
       </div>
       <LiveBar onClick={() => navigate("/")}>
-        <span className="text-sm">← Back to map</span>
+        <span className="text-sm">← Back to home</span>
         <span />
       </LiveBar>
     </div>
