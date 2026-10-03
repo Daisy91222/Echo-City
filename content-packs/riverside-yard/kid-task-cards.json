@@ -1,0 +1,18 @@
+{
+  "ry_leaves": {
+    "card_id": "ry_leaves",
+    "content_pack_id": "riverside-yard",
+    "template_id": "find_three_things",
+    "custom_text": "Go find three different kinds of leaves on the lawn.",
+    "points_reward": 15,
+    "activity_reward": 10
+  },
+  "ry_pinwheel": {
+    "card_id": "ry_pinwheel",
+    "content_pack_id": "riverside-yard",
+    "template_id": "do_it_with_family",
+    "custom_text": "Spin the pinwheel together with your family — ten full turns.",
+    "points_reward": 15,
+    "activity_reward": 10
+  }
+}

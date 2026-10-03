@@ -1,0 +1,12 @@
+{
+  "find_three_things": {
+    "template_id": "find_three_things",
+    "text_template": "Find three different {{thing}} nearby — no phone needed, just look around.",
+    "age_band_tag": "child_grade1_2"
+  },
+  "do_it_with_family": {
+    "template_id": "do_it_with_family",
+    "text_template": "Do this one together with your family, then come tell us about it.",
+    "age_band_tag": "child_grade3_4"
+  }
+}

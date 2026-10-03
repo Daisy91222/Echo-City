@@ -13,8 +13,15 @@ import merchantsData from "../../../../content-packs/riverside-yard/merchants.js
 import theRoomAnchorsData from "../../../../content-packs/the-room/anchors.json";
 import theRoomContentPackMeta from "../../../../content-packs/the-room/content-pack.json";
 import theRoomMerchantsData from "../../../../content-packs/the-room/merchants.json";
+// 2026-10-03 家庭成员位功能新增：儿童任务卡模板是引擎共享资源（§2 表），不属于
+// 任何一个内容包，所以不放进某个 content-pack 文件夹，单独放在 shared/ 下；
+// 任务卡本身（内容包专属）跟 anchors/merchants 一样，每个内容包一份文件。
+import kidTaskTemplatesData from "../../../../content-packs/shared/kid-task-templates.json";
+import riversideYardKidTaskCardsData from "../../../../content-packs/riverside-yard/kid-task-cards.json";
+import theRoomKidTaskCardsData from "../../../../content-packs/the-room/kid-task-cards.json";
 import type { Anchor } from "../engine/ai-translation/types";
 import type { Merchant } from "../engine/collection/types";
+import type { KidTaskCard, KidTaskTemplate } from "../engine/family/types";
 
 export interface ContentPackMeta {
   content_pack_id: string;
@@ -25,19 +32,28 @@ export interface ContentPackMeta {
 
 const packs: Record<
   string,
-  { meta: ContentPackMeta; anchors: Record<string, Anchor>; merchants: Record<string, Merchant> }
+  {
+    meta: ContentPackMeta;
+    anchors: Record<string, Anchor>;
+    merchants: Record<string, Merchant>;
+    kidTaskCards: Record<string, KidTaskCard>;
+  }
 > = {
   "riverside-yard": {
     meta: contentPackMeta as ContentPackMeta,
     anchors: anchorsData as unknown as Record<string, Anchor>,
     merchants: merchantsData as unknown as Record<string, Merchant>,
+    kidTaskCards: riversideYardKidTaskCardsData as unknown as Record<string, KidTaskCard>,
   },
   "the-room": {
     meta: theRoomContentPackMeta as ContentPackMeta,
     anchors: theRoomAnchorsData as unknown as Record<string, Anchor>,
     merchants: theRoomMerchantsData as unknown as Record<string, Merchant>,
+    kidTaskCards: theRoomKidTaskCardsData as unknown as Record<string, KidTaskCard>,
   },
 };
+
+const kidTaskTemplates = kidTaskTemplatesData as unknown as Record<string, KidTaskTemplate>;
 
 export function loadContentPack(contentPackId: string) {
   return packs[contentPackId] ?? null;
@@ -61,4 +77,12 @@ export function loadMerchant(contentPackId: string, merchantId: string): Merchan
 
 export function listAvailableContentPacks(): ContentPackMeta[] {
   return Object.values(packs).map((p) => p.meta);
+}
+
+export function listKidTaskCards(contentPackId: string): KidTaskCard[] {
+  return Object.values(packs[contentPackId]?.kidTaskCards ?? {});
+}
+
+export function loadKidTaskTemplate(templateId: string): KidTaskTemplate | null {
+  return kidTaskTemplates[templateId] ?? null;
 }

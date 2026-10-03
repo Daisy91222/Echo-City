@@ -129,15 +129,15 @@ export function S1Home() {
           </button>
         </div>
 
-        {/* 阶段 5 新增：此前注册后没有任何入口能回到 /select-workspace——
+        {/* 阶段 5 新增：此前注册后没有任何入口能回到 /switch-account——
             L2 只在注册那一刻导航过去一次。没有这一行，账号会永远困在
             riverside-yard 工作区，阶段 5"切换到 the-room 工作区"这条 DoD
             没有真实可点的路径可以验证。/ops 是运营后台草图的入口，标注
             "staff only"是文案层面的提示，不是真正的权限门（真正权限见 §3.10
             规则，由 Firebase 服务端判断，不是这个链接可不可见）。 */}
         <div className="flex justify-between px-fig16 py-fig8 bg-paper-raised border-t border-paper-line text-[10px] text-ink-soft">
-          <button type="button" className="underline" onClick={() => navigate("/select-workspace")}>
-            Switch workspace
+          <button type="button" className="underline" onClick={() => navigate("/switch-account")}>
+            Switch account
           </button>
           <button type="button" className="underline" onClick={() => navigate("/ops")}>
             Ops backend (staff only)

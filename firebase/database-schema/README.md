@@ -39,6 +39,7 @@ Realtime Database 没有 join、没有外键约束，只有一棵大 JSON 树。
 
 - `account_id` 使用 Firebase Authentication 分配的 `uid`，不另外生成主键——这样 `accounts/{uid}` 天然就是"当前登录用户能读写自己这份数据"的判断依据，`database.rules.json` 里直接用 `auth.uid === $account_id` 做校验，不需要额外一层映射。
 - `created_at` 用 Unix 毫秒时间戳（`ServerValue.TIMESTAMP` 由服务端在写入时生成），而不是 ISO 字符串——RTDB 排序、索引都基于数值更高效。
+- **2026-10-03 家庭成员位功能落地说明**：`accounts/{account_id}` 上新增两个可选字段，没有改 `.validate`（它只 `hasChildren()` 查必填字段，不限制额外字段）：`current_member_id`（当前以谁的身份在玩，`null`/不存在 = 监护人本人，否则是下面某个 `member_id`——纯 UI 层标记，不是认证边界，demo 里孩子始终用监护人的 `auth.uid` 写数据）；`member_slot_ids`（`{member_id: true}` 稀疏 map，账号到成员位的反向索引）。加反向索引的原因：`member_slots` 顶层节点没有开 `.read`（只在 `$member_id` 这一层按 `account_id` 校验），RTDB 的 `orderByChild` 查询在顶层没有 `.read` 时会被直接拒绝、不会按子节点规则做部分过滤（规则不是过滤器，是 RTDB 一个有名的坑）——所以只能反向索引 + 按 id 逐个读取，不能指望一次查询把"我账号下所有成员位"全部查出来。
 
 ### `member_slots/{member_id}`
 
@@ -369,6 +370,7 @@ Realtime Database 没有 join、没有外键约束，只有一棵大 JSON 树。
 ```
 
 - 拆成独立节点（而不是并进 `member_slots/{id}/task_log`）是因为它和 §3.1 的 `task_log`（"完成过的任务卡记录"）其实是同一份数据的两种视角——为避免维护两份真相，`task_log` 在实现时会是 `kid_task_completions/{member_id}` 的一个只读投影（前端订阅这个节点即可），§3.1 的 JSON 示例里出现的 `task_log` 结构，落地时就是这个节点，不重复存储。
+- **2026-10-03 落地说明（偏离本节原设计的两处）**：① `kid_task_templates`/`kid_task_cards` 这两个节点的 `database.rules.json` 写权限锁给了运营专员，但 demo 阶段没有运营专员账号（§1.9.1、`staff_roles` 对所有客户端零读写），实际写不进去——改为和 `anchors`/`merchants` 同一套做法，走静态内容包文件（`content-packs/shared/kid-task-templates.json` 引擎共享模板 + `content-packs/{pack}/kid-task-cards.json` 内容包专属任务卡），不走 Firebase。这两个 Firebase 节点因此和 `content_packs`/`anchors` 节点一样，是规则文件里写好但实际未被代码使用的节点，不是新引入的不一致。② `kid_task_completions/{member_id}/{card_id}` 原设计 `completed_at`（孩子完成）与 `guardian_confirmed_at`（家长确认）是两步、暗含"孩子自己先写一步"——但孩子在这个 demo 里不单独持有设备/账号（L-4.0），"发卡 → 手机收起 → 家长确认"的真实流程里，掏出手机操作的始终是监护人本人、同一个 `auth.uid`，不存在两个独立的写权限主体。`database.rules.json` 原规则也只给 `guardian_confirmed_at` 单独开过写权限，`card_id`/`completed_at` 连 `$card_id` 这一层的 `.write` 都没有——这是此前从未被代码真正写过才没暴露的一处规则缺口，2026-10-03 落地时发现并在 `$card_id` 层补了一条覆盖整条记录的写权限（同一个监护人校验），两步合并成监护人一次"Confirm completed"操作同时写三个字段。
 
 ---
 

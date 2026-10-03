@@ -2,7 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./engine/identity/useAuth";
 import { L1Login } from "./screens/Login/L1";
 import { L2Register } from "./screens/Register/L2";
-import { L3WorkspaceSelect } from "./screens/WorkspaceSelect/L3";
+import { L3SwitchAccount } from "./screens/SwitchAccount/L3";
 import { S1Home } from "./screens/Home/S1";
 import { A1AnchorScan } from "./screens/AnchorScan/A1";
 import { A2AnchorDetail } from "./screens/AnchorDetail/A2";
@@ -36,10 +36,10 @@ export default function App() {
       <Route path="/login" element={<L1Login />} />
       <Route path="/register" element={<L2Register />} />
       <Route
-        path="/select-workspace"
+        path="/switch-account"
         element={
           <RequireAuth>
-            <L3WorkspaceSelect />
+            <L3SwitchAccount />
           </RequireAuth>
         }
       />

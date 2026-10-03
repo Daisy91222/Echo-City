@@ -313,8 +313,21 @@
         // 只有该成员位所属账号的监护人能看到/确认任务完成记录
         ".read": "auth != null && root.child('member_slots').child($member_id).child('account_id').val() === auth.uid",
         "$card_id": {
-          // guardian_confirmed_at 必须由监护人本人写（D3："家长手动确认"是产品要求，
-          // 这里把它变成写权限层面的强制，不能由孩子的设备/账号自己确认自己的任务）
+          // 2026-10-03 补充（家庭成员位功能落地时发现）：原规则只给
+          // guardian_confirmed_at 开了写权限，完全没有给 card_id/completed_at
+          // 开过任何写权限——哪怕是 $card_id 这一层都没有 .write。按 D3"发卡 →
+          // 手机收起 → 家长确认"的实际产品流程，孩子没有独立设备/账号，这一整条
+          // 记录（完成时间 + 家长确认时间）物理上都是监护人同一台手机、同一个
+          // auth.uid 写的，不存在"孩子自己先写完成、家长再写确认"这两个独立的
+          // 写权限主体——所以这里直接在 $card_id 这一层开一条覆盖整条记录的
+          // 写权限，而不是像原来那样只给 guardian_confirmed_at 单独开一条、
+          // 却漏了 card_id/completed_at 导致整个功能此前连第一步都写不进去。
+          ".write": "auth != null && root.child('member_slots').child($member_id).child('account_id').val() === auth.uid",
+          "completed_at": { ".validate": "newData.isNumber()" },
+          // guardian_confirmed_at 保留原来单独的写权限声明（和上面 $card_id 级别
+          // 的权限重复，但不冲突）：这是 D3 产品要求"家长手动确认"在权限层面的
+          // 强调记号，即使孩子一侧将来真的换成独立设备/账号，这条字段级规则
+          // 依然要求确认动作必须是监护人的 auth.uid 做的
           "guardian_confirmed_at": {
             ".write": "auth != null && root.child('member_slots').child($member_id).child('account_id').val() === auth.uid"
           }

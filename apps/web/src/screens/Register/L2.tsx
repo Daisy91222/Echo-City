@@ -28,7 +28,7 @@ export function L2Register() {
       // 骨架阶段只有一个内容包，注册时直接绑定 riverside-yard 工作区，
       // L3 仍然展示"选工作区"这一步（只有一张卡），保留架构的可见落点（§1.9.2 引擎/内容包分离）
       await registerAndBootstrap(email, password, species, "riverside-yard");
-      navigate("/select-workspace");
+      navigate("/switch-account");
     } catch (err) {
       setError(err instanceof Error ? err.message : "注册失败");
     } finally {
