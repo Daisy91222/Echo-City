@@ -32,6 +32,7 @@ export function L3SwitchAccount() {
   const [newNickname, setNewNickname] = useState("");
   const [newAgeBand, setNewAgeBand] = useState<AgeBand>("child_grade1_2");
   const [memberError, setMemberError] = useState<string | null>(null);
+  const [savingMember, setSavingMember] = useState(false);
 
   const activeMemberId = account?.current_member_id ?? null;
   const activeMember = members.find((m) => m.member_id === activeMemberId) ?? null;
@@ -61,19 +62,35 @@ export function L3SwitchAccount() {
   }
 
   async function handleAddMember() {
-    if (!user || !newNickname.trim()) return;
+    // 2026-10-03 修复：原来这里"没填昵称就直接 return"是静默失败——点 Save
+    // 什么反应都没有（Diasy 反馈"点了没反应"正是这个表现）。改成明确报错，
+    // 并且把 createMemberSlot 包进 try/catch（这之前也没有，万一真的写入失败
+    // ——比如规则还没在 Firebase 控制台重新 Publish——同样会表现成"点了没反应"，
+    // 跟 handleEnterWorkspace 已经在用的错误展示方式保持一致）。
+    if (!user) return;
+    if (!newNickname.trim()) {
+      setMemberError("Nickname can't be empty.");
+      return;
+    }
     if (members.length >= MAX_MEMBER_SLOTS) {
       setMemberError(`Up to ${MAX_MEMBER_SLOTS} family members per account.`);
       return;
     }
     setMemberError(null);
-    await createMemberSlot(user.uid, {
-      nickname: newNickname.trim(),
-      avatar: "🧒",
-      age_band: newAgeBand,
-    });
-    setNewNickname("");
-    setAddingMember(false);
+    setSavingMember(true);
+    try {
+      await createMemberSlot(user.uid, {
+        nickname: newNickname.trim(),
+        avatar: "🧒",
+        age_band: newAgeBand,
+      });
+      setNewNickname("");
+      setAddingMember(false);
+    } catch (err) {
+      setMemberError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSavingMember(false);
+    }
   }
 
   async function handleCompleteCard(cardId: string, pointsReward: number, activityReward: number) {
@@ -164,8 +181,8 @@ export function L3SwitchAccount() {
             </select>
             {memberError && <p className="text-accent-red text-xs mb-fig12">{memberError}</p>}
             <div className="flex gap-fig12">
-              <Button className="flex-1" onClick={handleAddMember}>
-                Save
+              <Button className="flex-1" disabled={savingMember} onClick={handleAddMember}>
+                {savingMember ? "Saving..." : "Save"}
               </Button>
               <Button variant="secondary" className="flex-1" onClick={() => setAddingMember(false)}>
                 Cancel
