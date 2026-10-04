@@ -33,9 +33,9 @@ export function L3SwitchAccount() {
   const [newAgeBand, setNewAgeBand] = useState<AgeBand>("child_grade1_2");
   const [memberError, setMemberError] = useState<string | null>(null);
   const [savingMember, setSavingMember] = useState(false);
+  const [identityError, setIdentityError] = useState<string | null>(null);
 
   const activeMemberId = account?.current_member_id ?? null;
-  const activeMember = members.find((m) => m.member_id === activeMemberId) ?? null;
   const { completions } = useKidTaskCompletions(activeMemberId);
   const taskCards = workspace ? listKidTaskCards(workspace.content_pack_id) : [];
   const [completing, setCompleting] = useState<string | null>(null);
@@ -57,8 +57,16 @@ export function L3SwitchAccount() {
   }
 
   async function handleSwitchIdentity(memberId: string | null) {
+    // 2026-10-04 修复（Diasy 反馈"点新建的成员位没反应"）：原来没有 try/catch，
+    // 写入失败会静默；选中态也只靠一圈边框颜色，几乎看不出变化，任务卡又渲染在
+    // 页面最底部（折叠线以下），点了之后肉眼看不到任何变化。
     if (!user) return;
-    await switchActiveMember(user.uid, memberId);
+    setIdentityError(null);
+    try {
+      await switchActiveMember(user.uid, memberId);
+    } catch (err) {
+      setIdentityError(err instanceof Error ? err.message : String(err));
+    }
   }
 
   async function handleAddMember() {
@@ -136,27 +144,74 @@ export function L3SwitchAccount() {
         </p>
 
         <Card
-          className={`cursor-pointer ${activeMemberId === null ? "border-accent-orange" : ""}`}
+          className={`cursor-pointer ${activeMemberId === null ? "border-accent-orange bg-accent-sand" : ""}`}
           onClick={() => handleSwitchIdentity(null)}
         >
-          <p className="font-semibold">You (guardian)</p>
+          <p className="font-semibold">
+            You (guardian)
+            {activeMemberId === null && (
+              <span className="ml-fig8 text-xs text-accent-red">● Playing now</span>
+            )}
+          </p>
           <p className="text-xs text-ink-soft">{account?.email}</p>
         </Card>
 
-        {members.map((m) => (
-          <Card
-            key={m.member_id}
-            className={`cursor-pointer ${activeMemberId === m.member_id ? "border-accent-orange" : ""}`}
-            onClick={() => handleSwitchIdentity(m.member_id)}
-          >
-            <p className="font-semibold">
-              {m.avatar} {m.nickname}
-            </p>
-            <p className="text-xs text-ink-soft">
-              {m.age_band} · ★ {m.points_balance} · activity {m.activity_score}
-            </p>
-          </Card>
-        ))}
+        {members.map((m) => {
+          const isActive = activeMemberId === m.member_id;
+          return (
+            <div key={m.member_id} className="flex flex-col gap-fig12">
+              <Card
+                className={`cursor-pointer ${isActive ? "border-accent-orange bg-accent-sand" : ""}`}
+                onClick={() => handleSwitchIdentity(m.member_id)}
+              >
+                <p className="font-semibold">
+                  {m.avatar} {m.nickname}
+                  {isActive && <span className="ml-fig8 text-xs text-accent-red">● Playing now</span>}
+                </p>
+                <p className="text-xs text-ink-soft">
+                  {m.age_band} · ★ {m.points_balance} · activity {m.activity_score}
+                </p>
+              </Card>
+              {isActive && (
+                <div className="flex flex-col gap-fig12 pl-fig12">
+                  <p className="text-xs text-ink-soft uppercase tracking-wide">
+                    {m.nickname}'s task cards
+                  </p>
+                  {taskCards.length === 0 && (
+                    <p className="text-xs text-ink-soft">No task cards for this workspace yet.</p>
+                  )}
+                  {taskCards.map((card) => {
+                    const done = !!completions[card.card_id];
+                    return (
+                      <Card key={card.card_id}>
+                        <p className="text-sm">{card.custom_text}</p>
+                        <p className="text-xs text-ink-soft mb-fig12">
+                          ★ {card.points_reward} · activity {card.activity_reward}
+                        </p>
+                        <Button
+                          variant={done ? "secondary" : "primary"}
+                          disabled={done || completing === card.card_id}
+                          className="w-full"
+                          onClick={() =>
+                            handleCompleteCard(card.card_id, card.points_reward, card.activity_reward)
+                          }
+                        >
+                          {done
+                            ? "✓ Completed"
+                            : completing === card.card_id
+                              ? "Confirming..."
+                              : "Confirm completed"}
+                        </Button>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {identityError && <p className="text-accent-red text-xs">{identityError}</p>}
 
         {!addingMember ? (
           <Button variant="secondary" className="w-full" onClick={() => setAddingMember(true)}>
@@ -191,36 +246,6 @@ export function L3SwitchAccount() {
           </Card>
         )}
       </div>
-
-      {activeMember && (
-        <div className="flex flex-col gap-fig12 w-full max-w-sm">
-          <p className="text-xs text-ink-soft uppercase tracking-wide mt-fig12">
-            {activeMember.nickname}'s task cards
-          </p>
-          {taskCards.length === 0 && (
-            <p className="text-xs text-ink-soft">No task cards for this workspace yet.</p>
-          )}
-          {taskCards.map((card) => {
-            const done = !!completions[card.card_id];
-            return (
-              <Card key={card.card_id}>
-                <p className="text-sm">{card.custom_text}</p>
-                <p className="text-xs text-ink-soft mb-fig12">
-                  ★ {card.points_reward} · activity {card.activity_reward}
-                </p>
-                <Button
-                  variant={done ? "secondary" : "primary"}
-                  disabled={done || completing === card.card_id}
-                  className="w-full"
-                  onClick={() => handleCompleteCard(card.card_id, card.points_reward, card.activity_reward)}
-                >
-                  {done ? "✓ Completed" : completing === card.card_id ? "Confirming..." : "Confirm completed"}
-                </Button>
-              </Card>
-            );
-          })}
-        </div>
-      )}
 
       <p className="text-xs text-ink-soft mt-fig12">One engine · one content pack per site</p>
     </div>
