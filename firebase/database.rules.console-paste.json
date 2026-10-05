@@ -1,0 +1,179 @@
+{
+  "rules": {
+    "accounts": {
+      "$account_id": {
+        ".read": "auth != null && auth.uid === $account_id",
+        ".write": "auth != null && auth.uid === $account_id",
+        ".validate": "newData.hasChildren(['email', 'activity_score', 'current_scene_mode', 'current_workspace_id', 'pet_id'])",
+        "email": { ".validate": "newData.isString()" },
+        "activity_score": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "current_scene_mode": { ".validate": "newData.val() === 'desk_focus' || newData.val() === 'onsite'" }
+      }
+    },
+    "member_slots": {
+      "$member_id": {
+        ".read": "auth != null && data.child('account_id').val() === auth.uid",
+        ".write": "auth != null && (data.child('account_id').val() === auth.uid || (!data.exists() && newData.child('account_id').val() === auth.uid))",
+        "account_id": { ".validate": "newData.val() === auth.uid" },
+        "activity_score": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "points_balance": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "task_log": { ".write": false }
+      }
+    },
+    "workspaces": {
+      "$workspace_id": {
+        ".read": "auth != null && (!data.exists() || data.child('account_id').val() === auth.uid)",
+        ".write": "auth != null && (data.child('account_id').val() === auth.uid || (!data.exists() && newData.child('account_id').val() === auth.uid))",
+        "account_id": { ".validate": "newData.val() === auth.uid" },
+        "points_balance": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "credits_balance": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "points_daily_cap": {
+          ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'"
+        }
+      }
+    },
+    "pets": {
+      "$pet_id": {
+        ".read": "auth != null && data.child('account_id').val() === auth.uid",
+        ".write": "auth != null && (data.child('account_id').val() === auth.uid || (!data.exists() && newData.child('account_id').val() === auth.uid))",
+        "account_id": { ".validate": "newData.val() === auth.uid" },
+        "mood_tier": { ".write": false }
+      }
+    },
+    "content_packs": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'operations_specialist'"
+    },
+    "anchors": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'operations_specialist'",
+      "$anchor_id": {
+        "daily_greeting_text": { ".write": false },
+        "daily_greeting_generated_at": { ".write": false },
+        "daily_greeting_reviewed": {
+          ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'publicity'",
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    },
+    "story_chapters": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'operations_specialist'"
+    },
+    "currency_channel_config": {
+      ".read": "auth != null && (root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer' || root.child('staff_roles').child(auth.uid).val() === 'operations_specialist')",
+      ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'"
+    },
+    "world_events": {
+      ".read": "auth != null",
+      "$event_id": {
+        ".write": "auth != null && !data.exists()",
+        ".validate": "newData.hasChildren(['event_id', 'content_pack_id', 'starts_at', 'ends_at', 'landmark_anchor_id', 'boss_hp_total', 'boss_hp_remaining', 'version', 'settled', 'reward_pool_total'])",
+        "starts_at": { ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'" },
+        "ends_at": { ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'" },
+        "landmark_anchor_id": { ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'" },
+        "geofence": { ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'" },
+        "boss_hp_total": { ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'" },
+        "reward_pool_total": { ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'" },
+        "boss_hp_remaining": {
+          ".write": "auth != null",
+          ".validate": "newData.isNumber() && newData.val() >= 0 && (!data.exists() || newData.val() <= data.val())"
+        },
+        "version": {
+          ".write": "auth != null",
+          ".validate": "newData.isNumber() && (!data.exists() ? newData.val() === 0 : newData.val() === data.val() + 1)"
+        },
+        "settled": {
+          ".write": "auth != null",
+          ".validate": "newData.isBoolean() && (!data.exists() ? newData.val() === false : (data.val() === false || newData.val() === data.val()))"
+        }
+      }
+    },
+    "world_event_participation": {
+      "$event_id": {
+        ".read": "auth != null",
+        "$participant_id": {
+          "joined_at": {
+            ".write": "auth != null && $participant_id === auth.uid"
+          },
+          "eligible_to_attack": {
+            ".write": "auth != null && $participant_id === auth.uid",
+            ".validate": "newData.isBoolean()"
+          },
+          "damage_from_minigame": {
+            ".write": "auth != null && $participant_id === auth.uid",
+            ".validate": "newData.isNumber() && newData.val() >= 0 && (!data.exists() ? newData.val() <= 60 : (newData.val() >= data.val() && newData.val() - data.val() <= 60))"
+          },
+          "damage_from_activity": {
+            ".write": "auth != null && $participant_id === auth.uid",
+            ".validate": "newData.isNumber() && newData.val() >= 0 && (!data.exists() ? newData.val() <= 40 : (newData.val() >= data.val() && newData.val() - data.val() <= 40))"
+          },
+          "last_activity_settlement_at": {
+            ".write": "auth != null && $participant_id === auth.uid",
+            ".validate": "newData.isNumber() && (!data.exists() || newData.val() >= data.val())"
+          },
+          "activity_score_at_last_settlement": {
+            ".write": "auth != null && $participant_id === auth.uid",
+            ".validate": "newData.isNumber()"
+          },
+          "reward_claimed": {
+            ".write": "auth != null && $participant_id === auth.uid && data.val() !== true",
+            ".validate": "newData.isBoolean() && newData.val() === true"
+          }
+        }
+      }
+    },
+    "daily_mini_events": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'platform_maintainer'"
+    },
+    "pet_status_sentences": {
+      "$pet_id": {
+        ".read": "auth != null && root.child('pets').child($pet_id).child('account_id').val() === auth.uid",
+        ".write": false,
+        "reviewed": {
+          ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'publicity'",
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    },
+    "merchants": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'operations_specialist'"
+    },
+    "redemption_records": {
+      "$redemption_id": {
+        ".read": "auth != null && root.child('workspaces').child(data.child('workspace_id').val()).child('account_id').val() === auth.uid",
+        ".write": "auth != null && !data.exists() && newData.child('workspace_id').val() != null && root.child('workspaces').child(newData.child('workspace_id').val()).child('account_id').val() === auth.uid",
+        "redeemed_at": {
+          ".write": "auth != null",
+          ".validate": "!data.exists() && newData.isNumber()"
+        }
+      }
+    },
+    "kid_task_templates": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'operations_specialist'"
+    },
+    "kid_task_cards": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('staff_roles').child(auth.uid).val() === 'operations_specialist'"
+    },
+    "kid_task_completions": {
+      "$member_id": {
+        ".read": "auth != null && root.child('member_slots').child($member_id).child('account_id').val() === auth.uid",
+        "$card_id": {
+          ".write": "auth != null && root.child('member_slots').child($member_id).child('account_id').val() === auth.uid",
+          "completed_at": { ".validate": "newData.isNumber()" },
+          "guardian_confirmed_at": {
+            ".write": "auth != null && root.child('member_slots').child($member_id).child('account_id').val() === auth.uid"
+          }
+        }
+      }
+    },
+    "staff_roles": {
+      ".read": false,
+      ".write": false
+    }
+  }
+}
